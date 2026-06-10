@@ -1,0 +1,41 @@
+name: Jest Coverage
+
+on:
+  push:
+      branches: ["main", "tech/jest-integration"]
+      pull_request:
+        branches: ["main"]
+
+jobs:
+  coverage:
+    name: Run Jest Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+   
+
+      - name: Setup Node.json
+        uses: actions/setup-node@v4
+        with:
+        node-version: "18"
+        cache: "npm"
+        cache-dependency-path: backend/package-lock.json 
+
+      -  name: Install dependencies
+         working-directory: backend
+         run: npm Install
+
+      -  name: Run tests with coverage
+         working-directory: backend
+         run: npm run test:coverage
+
+      -  name: Upload coverage report 
+         uses: actions/Upload-artifact@v4
+         with:
+           name: coverage-report
+           path: backend/coverage/
+           retention-days: 7
+
+      
