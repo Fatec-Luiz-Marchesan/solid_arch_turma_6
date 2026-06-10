@@ -7,6 +7,51 @@ A escala de pontuação (story points) segue a sequência de Fibonacci adaptada:
 
 ---
 
+## 🧪 Jest Covarage Tool
+
+Está seção documenta a integração do **Jest Covarage Tool** no projeto, realizada na Task 51.
+
+### O que é
+
+O Jest Covarage Tool analisa quais linhas, funções, branches e statments do código são executados durante os testes, gerando relatórios detalhados de corbetura. Isso garantes qualidade contínua visibilidade sobre áreas não testadas.
+
+### Configuração
+O arquivo principal da configuração está em `backend/jest.config.js`.
+
+O coverage é coletado das camadas de `controllers`, `helpers` e `models`, e o relatório é gerado nos formatos **text** (terminal), **lcov** e **html**.
+
+## Como executar localmente
+
+```bash
+#Entar na pasta do backend
+cd backend
+
+#Rodar todos os testes com coverage
+npm run test:coverage
+
+# Rodar em modo watch (útil durante desenvolvimento)
+npm run test:coverage:watch
+```
+
+O relatório HTML será gerado em `backend/coverage/index.html`. Abra no navegador para visualização interativa.
+
+### Estrutura dos testes
+
+Os testes ficam em `backend/__tests__/upload/imageUpload.test.js`, aplicando a PoC no helper de Upload.
+
+### Integração em CI (GitHub Actions)
+
+O workflow `github/workflow/jest-coverage.yml` executa automaticamente os testes com coverage a cada push na `main` ou abertura de Pull Request.
+
+O relatório de coverage é salvo como artefato na aba **Actions** do GitHub por 7 dias.
+
+### Arquitetura (Clean Arch / SOLID)
+
+A ferramenta de coverage é integrada como **puglin externo** na camada de infraestrutura de testes. Ela **não altera** nenhuma regra de negócio, Use Case ou Entidade. Os testes importam apenas helpers e controllers de forma isolada, respeitando o **Dependency Inversion Principle**.
+
+---
+
+
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
