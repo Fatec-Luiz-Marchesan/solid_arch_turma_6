@@ -7,6 +7,7 @@ const config = {
         'controllers/**/*.js',
         'helpers/**/*.js',
         'models/**/*.js',
+        'usecases/**/*.js',
         '!**/node_modules/**',
     ],
     coverageReporters: ['text', 'lcov', 'html'],

@@ -7,13 +7,13 @@ A escala de pontuação (story points) segue a sequência de Fibonacci adaptada:
 
 ---
 
-## 🧪 Jest Covarage Tool
+## 🧪 Jest Coverage Tool (Task 51)
 
-Está seção documenta a integração do **Jest Covarage Tool** no projeto, realizada na Task 51.
+Está seção documenta a integração do **Jest Coverage Tool** no projeto.
 
 ### O que é
 
-O Jest Covarage Tool analisa quais linhas, funções, branches e statments do código são executados durante os testes, gerando relatórios detalhados de corbetura. Isso garantes qualidade contínua visibilidade sobre áreas não testadas.
+O Jest Coverage Tool analisa quais linhas, funções, branches e statments do código são executados durante os testes, gerando relatórios detalhados de corbetura. Isso garantes qualidade contínua visibilidade sobre áreas não testadas.
 
 ### Configuração
 O arquivo principal da configuração está em `backend/jest.config.js`.
@@ -48,6 +48,80 @@ O relatório de coverage é salvo como artefato na aba **Actions** do GitHub por
 ### Arquitetura (Clean Arch / SOLID)
 
 A ferramenta de coverage é integrada como **puglin externo** na camada de infraestrutura de testes. Ela **não altera** nenhuma regra de negócio, Use Case ou Entidade. Os testes importam apenas helpers e controllers de forma isolada, respeitando o **Dependency Inversion Principle**.
+
+---
+
+## 💬 Módulo de Mensagens (Task 119)
+
+Implementação completa do fluxo de mensagens entre usuários sobre pets disponíveis para adoção. Permite que um usuário interessado entre em contato com o dono de um pet diretamente pelo sistema.
+
+### Funcionalidades
+
+- Envio de mensagens vinculadas a um pet específico
+- Listagem das mensagens enviadas e recebidas pelo usuário
+- Visualização individual de cada mensagem
+- Edição da mensagem (apenas pelo remetente)
+- Remoção da mensagem (apenas pelo remetente)
+
+### Autenticação
+
+Todas as rotas exigem o header de autenticação:
+
+```
+Authorization: Bearer <token>
+​```
+### Endpoints disponíveis
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /messages | Envia uma nova mensagem |
+| GET | /messages | Lista todas as mensagens do usuário logado |
+| GET | /messages/:id | Retorna os detalhes de uma mensagem específica |
+| PATCH | /messages/:id | Edita o conteúdo de uma mensagem |
+| DELETE | /messages/:id | Remove uma mensagem |
+
+### Exemplo de requisição
+
+POST /messages
+
+```json
+{
+  "content": "Olá, ainda tem o pet disponível para adoção?",
+  "receiverId": "65f1a2b3c4d5e6f7a8b9c0d1",
+  "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
+}
+```
+
+### Regras de validação
+
+- O conteúdo é obrigatório e deve ter entre 1 e 1000 caracteres
+- O destinatário (receiverId) é obrigatório
+- O pet (petId) é obrigatório
+- Não é permitido enviar mensagem para si mesmo
+- Apenas o remetente pode editar ou remover a mensagem
+
+### Organização por camadas
+
+A funcionalidade foi construída respeitando os princípios da Clean Architecture:
+
+- **Routers** (`routers/MessageRouters.js`) — define as rotas HTTP do Express
+- **Controllers** (`controllers/MessageController.js`) — recebe a requisição HTTP e delega para o caso de uso correspondente
+- **Use Cases** (`usecases/message/`) — concentra toda a regra de negócio, sem depender de Express ou Mongoose diretamente
+- **Helpers** (`helpers/validate-message.js`) — funções puras de validação
+- **Model** (`models/Message.js`) — schema do Mongoose
+
+O repositório de dados é injetado nos casos de uso através de parâmetros (Dependency Inversion Principle), o que permite testar 100% da regra de negócio com mocks, sem precisar de banco de dados rodando.
+
+### Testes
+
+Os testes ficam em `backend/__tests__/message/` e cobrem todos os casos de uso, incluindo cenários de sucesso, falha de validação, falta de autenticação e tentativas de acesso indevido.
+
+Para rodar os testes desta funcionalidade junto com o relatório de cobertura:
+
+```bash
+cd backend
+npm run test:coverage
+```
 
 ---
 
