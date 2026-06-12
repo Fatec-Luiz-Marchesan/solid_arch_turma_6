@@ -11,6 +11,9 @@ const PetRoutes = require('../../../routers/PetRouters')
 const UserRoutes = require('../../../routers/UserRouters')
 const AdminRoutes = require('../../../routers/AdminRouters')
 const UserRoutesV2 = require('../../../routers/UserRoutersV2')
+const LocationRoutes = require('../../../routers/LocationRouters')
+
+app.use('/locations', LocationRoutes)
 
 app.use('/v2/users', UserRoutesV2)
 
