@@ -125,6 +125,79 @@ npm run test:coverage
 
 ---
 
+---
+
+## 💳 Pagamentos
+
+Sistema de registro de pagamentos vinculados à adoção de pets. Implementado na Task 29 seguindo a mesma arquitetura limpa do módulo de Mensagens.
+
+### Sobre o módulo
+
+Quando um usuário decide adotar um pet, ele pode registrar um pagamento referente à taxa de adoção ou uma doação ao abrigo. O sistema mantém o histórico dessas transações, permitindo acompanhar status (pendente, concluído, estornado) e o método utilizado (PIX, cartão, dinheiro).
+
+### Métodos de pagamento aceitos
+
+- `credit_card` — Cartão de crédito
+- `debit_card` — Cartão de débito
+- `pix` — PIX
+- `cash` — Dinheiro
+
+### Estados possíveis
+
+- `pending` — Aguardando confirmação (estado inicial)
+- `completed` — Pagamento confirmado
+- `refunded` — Pagamento estornado (estado final, não pode ser revertido)
+
+### Rotas da API
+
+Base: `/payments` (todas exigem `Authorization: Bearer <token>`)
+
+**POST /payments** — Registra um novo pagamento
+
+Corpo da requisição:
+​```json
+{
+  "amount": 150.00,
+  "method": "pix",
+  "petId": "65a9b8c7d6e5f4a3b2c1d0e9",
+  "description": "Taxa de adoção"
+}
+​```
+
+**GET /payments** — Retorna todos os pagamentos do usuário autenticado, ordenados do mais recente para o mais antigo.
+
+**GET /payments/:id** — Detalhe de um pagamento específico. Apenas o próprio pagador tem acesso.
+
+**PATCH /payments/:id/status** — Atualiza o status do pagamento. Corpo: `{ "status": "completed" }`.
+
+**DELETE /payments/:id** — Remove o pagamento. Disponível apenas para pagamentos com status `pending`.
+
+### Regras de negócio
+
+| Cenário | Resposta |
+|---|---|
+| Valor menor ou igual a zero | 422 — valor inválido |
+| Método fora da lista permitida | 422 — método inválido |
+| Descrição com mais de 500 caracteres | 422 — descrição muito longa |
+| Acesso a pagamento de outro usuário | 403 — acesso negado |
+| Tentativa de alterar pagamento `refunded` | 422 — estado final |
+| Tentativa de deletar pagamento `completed` | 422 — apenas pendentes |
+| Pagamento inexistente | 404 — não encontrado |
+
+### Como o código está organizado
+
+A arquitetura é a mesma do módulo de Mensagens, separando responsabilidades em camadas independentes:
+
+​```
+backend/
+├── routers/PaymentRouters.js          → roteamento + rate limiting
+├── controllers/PaymentController.js   → ponte HTTP ↔ use case
+├── usecases/payment/                  → regras de negócio puras
+├── helpers/validate-payment.js        → validações reutilizáveis
+└── models/Payment.js                  → schema Mongoose
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
