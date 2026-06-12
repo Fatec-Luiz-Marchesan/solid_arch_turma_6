@@ -23,7 +23,12 @@ async function updatePaymentStatus({ id, data, user, PaymentRepository }) {
     };
   }
 
-  const updated = await PaymentRepository.update(id, { status: data.status });
+  const updatePayload = { status: data.status };
+  if (data.status === 'completed' || data.status === 'refunded') {
+    updatePayload.processedAt = new Date();
+  }
+
+  const updated = await PaymentRepository.update(id, updatePayload);
   return { success: true, status: 200, payment: updated };
 }
 
