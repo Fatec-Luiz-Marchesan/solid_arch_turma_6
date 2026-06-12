@@ -4,7 +4,10 @@ const AdminModel = require('../models/AdminModel')
 
 class AdminMongoRepository extends IAdminRepository {
   async findByEmail(email) {
-    return AdminModel.findOne({ email })
+    if (typeof email !== 'string') {
+       return null
+     }
+     return AdminModel.findOne({ email: { $eq: email } })
   }
 
   async create(adminData) {
