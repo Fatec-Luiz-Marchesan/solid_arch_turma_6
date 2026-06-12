@@ -1,0 +1,13 @@
+
+class IPaymentRepository {
+  
+  async create(paymentData) {
+    throw new Error('Método create não implementado')
+  }
+
+  async findAll() {
+    throw new Error('Método findAll não implementado')
+  }
+}
+
+module.exports = { IPaymentRepository }
