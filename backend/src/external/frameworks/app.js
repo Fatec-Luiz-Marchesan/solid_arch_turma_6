@@ -11,10 +11,12 @@ const PetRoutes = require('../../../routers/PetRouters')
 const UserRoutes = require('../../../routers/UserRouters')
 const AdminRoutes = require('../../../routers/AdminRouters')
 const UserRoutesV2 = require('../../../routers/UserRoutersV2')
+const ReportRoutes = require('../../../routers/ReportRouters')
 
 app.use('/v2/users', UserRoutesV2)
 
 app.use('/admins', AdminRoutes)
+app.use('/reports', ReportRoutes)
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
