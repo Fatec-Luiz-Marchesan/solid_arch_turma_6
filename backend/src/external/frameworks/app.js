@@ -9,6 +9,9 @@ app.use(express.static('public'))
 
 const PetRoutes = require('../../../routers/PetRouters')
 const UserRoutes = require('../../../routers/UserRouters')
+const AdminRoutes = require('../../../routers/AdminRouters')
+
+app.use('/admins', AdminRoutes)
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
