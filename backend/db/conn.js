@@ -5,6 +5,8 @@ async function main() {
   console.log('Conectou com Mongoose!')
 }
 
-main().catch((err) => console.log(err))
+if (process.env.NODE_ENV !== 'test') {
+  main().catch((err) => console.log(err))
+}
 
 module.exports = mongoose
