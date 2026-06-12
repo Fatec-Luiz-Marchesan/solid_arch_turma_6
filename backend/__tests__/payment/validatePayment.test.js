@@ -1,5 +1,4 @@
-const { describe, it, expect } = require('@jest/globals');
-const { validatePayment, validateStatus } = require('../../helpers/validate-payment');
+const { validatePayment, validateStatus, validateRefund } = require('../../helpers/validate-payment');
 
 describe('validatePayment helper', () => {
   it('aceita pagamento válido', () => {
@@ -119,6 +118,77 @@ describe('validatePayment helper', () => {
     });
     expect(r.isValid).toBe(false);
   });
+
+  it('aceita installments dentro do range para credit_card', () => {
+    const r = validatePayment({
+      amount: 1200,
+      method: 'credit_card',
+      petId: 'p1',
+      installments: 6,
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita installments fora do range', () => {
+    const r = validatePayment({
+      amount: 1200,
+      method: 'credit_card',
+      petId: 'p1',
+      installments: 13,
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita installments não inteiros', () => {
+    const r = validatePayment({
+      amount: 1200,
+      method: 'credit_card',
+      petId: 'p1',
+      installments: 2.5,
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita parcelamento para método != credit_card', () => {
+    const r = validatePayment({
+      amount: 1200,
+      method: 'pix',
+      petId: 'p1',
+      installments: 3,
+    });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/credit_card/);
+  });
+
+  it('aceita fee zero ou positiva', () => {
+    const r = validatePayment({
+      amount: 100,
+      method: 'pix',
+      petId: 'p1',
+      fee: 5,
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita fee negativa', () => {
+    const r = validatePayment({
+      amount: 100,
+      method: 'pix',
+      petId: 'p1',
+      fee: -1,
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita fee maior que o valor', () => {
+    const r = validatePayment({
+      amount: 100,
+      method: 'pix',
+      petId: 'p1',
+      fee: 150,
+    });
+    expect(r.isValid).toBe(false);
+  });
 });
 
 describe('validateStatus helper', () => {
@@ -134,5 +204,28 @@ describe('validateStatus helper', () => {
 
   it('rejeita status inválido', () => {
     expect(validateStatus('cancelado').isValid).toBe(false);
+  });
+});
+
+
+describe('validateRefund helper', () => {
+  it('aceita motivo válido', () => {
+    const r = validateRefund({ refundReason: 'Pet adotado por outra pessoa' });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita sem motivo', () => {
+    const r = validateRefund({});
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita motivo muito curto', () => {
+    const r = validateRefund({ refundReason: 'oi' });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita motivo muito longo', () => {
+    const r = validateRefund({ refundReason: 'a'.repeat(501) });
+    expect(r.isValid).toBe(false);
   });
 });

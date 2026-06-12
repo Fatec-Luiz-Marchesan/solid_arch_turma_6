@@ -42,4 +42,15 @@ describe('getPaymentById use case', () => {
     });
     expect(r.status).toBe(422);
   });
+
+  it('retorna 404 quando payment está soft-deleted', async () => {
+    const deleted = { ...basePay, deletedAt: new Date() };
+    const repo = { findById: jest.fn(async () => deleted) };
+    const r = await getPaymentById({
+      id: 'p1',
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.status).toBe(404);
+  });
 });

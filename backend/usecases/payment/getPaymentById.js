@@ -4,7 +4,7 @@ async function getPaymentById({ id, user, PaymentRepository }) {
   }
 
   const payment = await PaymentRepository.findById(id);
-  if (!payment) {
+  if (!payment || payment.deletedAt) {
     return { success: false, status: 404, errors: ['Pagamento não encontrado!'] };
   }
 

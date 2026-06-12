@@ -221,6 +221,36 @@ A lógica de preencher o `processedAt` fica no use case, não no model, mantendo
 
 ---
 
+---
+
+## 🔧 Atualização do Model de Payment v2 (Task 104)
+
+Segunda iteração de melhorias no Model de Payment, adicionando parcelamento, taxas, estorno auditável e exclusão lógica.
+
+### Novos campos
+
+- **installments** — Número de parcelas (1 a 12). Permitido apenas para `credit_card`. Padrão: `1`.
+- **fee** — Taxa do gateway, em mesma moeda do pagamento. Padrão: `0`.
+- **refundReason** — Motivo do estorno. Obrigatório quando o status vira `refunded`.
+- **deletedAt** — Data de exclusão lógica (soft delete). Pagamentos com este campo preenchido não aparecem nas listagens.
+
+### Campo virtual
+
+- **netAmount** — Valor líquido calculado como `amount - fee`. Não é persistido no banco, é calculado em tempo de leitura.
+
+### Novas regras de negócio
+
+- Parcelamento maior que 1 só é permitido para `credit_card`
+- A taxa não pode ser negativa nem maior que o valor do pagamento
+- Estorno (`refunded`) exige justificativa de no mínimo 5 caracteres
+- Pagamentos deletados continuam no banco para auditoria, mas ficam invisíveis ao usuário
+
+### Por que soft delete
+
+Pagamentos têm valor contábil e regulatório. Apagar de verdade pode quebrar relatórios e auditorias. A abordagem de soft delete mantém o histórico íntegro.
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
