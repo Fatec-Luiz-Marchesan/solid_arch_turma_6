@@ -63,4 +63,49 @@ describe('updatePaymentStatus use case', () => {
     expect(r.status).toBe(422);
     expect(r.errors[0]).toMatch(/estornado/);
   });
+
+  it('preenche processedAt ao mudar para completed', async () => {
+    const repo = {
+      findById: jest.fn(async () => basePay),
+      update: jest.fn(async (id, payload) => ({ ...basePay, ...payload })),
+    };
+    await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'completed' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    const payload = repo.update.mock.calls[0][1];
+    expect(payload.processedAt).toBeInstanceOf(Date);
+  });
+
+  it('preenche processedAt ao mudar para refunded', async () => {
+    const repo = {
+      findById: jest.fn(async () => basePay),
+      update: jest.fn(async (id, payload) => ({ ...basePay, ...payload })),
+    };
+    await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'refunded' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    const payload = repo.update.mock.calls[0][1];
+    expect(payload.processedAt).toBeInstanceOf(Date);
+  });
+
+  it('NÃO preenche processedAt quando status continua pending', async () => {
+    const repo = {
+      findById: jest.fn(async () => basePay),
+      update: jest.fn(async (id, payload) => ({ ...basePay, ...payload })),
+    };
+    await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'pending' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    const payload = repo.update.mock.calls[0][1];
+    expect(payload.processedAt).toBeUndefined();
+  });
 });

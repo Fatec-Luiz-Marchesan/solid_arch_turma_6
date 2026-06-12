@@ -198,6 +198,29 @@ backend/
 
 ---
 
+---
+
+## 🔧 Atualização do Model de Payment (Task 52)
+
+O Model de Payment recebeu novos campos opcionais para suportar pagamentos em múltiplas moedas e integração com gateways externos.
+
+### Novos campos
+
+- **currency** — Moeda do pagamento (`BRL`, `USD` ou `EUR`). Padrão: `BRL`.
+- **transactionId** — ID externo do gateway de pagamento. Opcional, entre 8 e 50 caracteres alfanuméricos.
+- **processedAt** — Data em que o pagamento foi processado. Preenchido automaticamente quando o status vira `completed` ou `refunded`.
+
+### Outras melhorias
+
+- Valor máximo por transação limitado a R$ 1.000.000.
+- Índices adicionados para acelerar consultas por usuário e por data.
+
+### Observações
+
+A lógica de preencher o `processedAt` fica no use case, não no model, mantendo o SRP. Pagamentos antigos continuam funcionando normalmente, pois todos os novos campos são opcionais.
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54

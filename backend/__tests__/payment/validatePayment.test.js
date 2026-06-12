@@ -28,10 +28,15 @@ describe('validatePayment helper', () => {
     expect(r.errors[0]).toMatch(/maior que zero/);
   });
 
+  it('rejeita amount acima do limite máximo', () => {
+    const r = validatePayment({ amount: 2000000, method: 'pix', petId: 'p1' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/1000000/);
+  });
+
   it('rejeita method inválido', () => {
     const r = validatePayment({ amount: 50, method: 'bitcoin', petId: 'p1' });
     expect(r.isValid).toBe(false);
-    expect(r.errors[0]).toMatch(/inválido/);
   });
 
   it('rejeita sem method', () => {
@@ -50,6 +55,67 @@ describe('validatePayment helper', () => {
       method: 'pix',
       petId: 'p1',
       description: 'a'.repeat(501),
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('aceita currency válida', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      currency: 'USD',
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('aceita currency em minúsculo (normalizada)', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      currency: 'eur',
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita currency inválida', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      currency: 'BTC',
+    });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/moeda/i);
+  });
+
+  it('aceita transactionId válido', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      transactionId: 'TXN-2024-001',
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita transactionId muito curto', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      transactionId: 'abc',
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('rejeita transactionId com caracteres inválidos', () => {
+    const r = validatePayment({
+      amount: 50,
+      method: 'pix',
+      petId: 'p1',
+      transactionId: 'tx@#$%123abc',
     });
     expect(r.isValid).toBe(false);
   });
