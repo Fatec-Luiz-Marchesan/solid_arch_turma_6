@@ -1,8 +1,8 @@
-const { validateStatus } = require('../../helpers/validate-payment');
+const { validateStatus, validateRefund } = require('../../helpers/validate-payment');
 
 async function updatePaymentStatus({ id, data, user, PaymentRepository }) {
   const payment = await PaymentRepository.findById(id);
-  if (!payment) {
+  if (!payment || payment.deletedAt) {
     return { success: false, status: 404, errors: ['Pagamento não encontrado!'] };
   }
 
@@ -24,8 +24,17 @@ async function updatePaymentStatus({ id, data, user, PaymentRepository }) {
   }
 
   const updatePayload = { status: data.status };
+
   if (data.status === 'completed' || data.status === 'refunded') {
     updatePayload.processedAt = new Date();
+  }
+
+  if (data.status === 'refunded') {
+    const refundValidation = validateRefund(data);
+    if (!refundValidation.isValid) {
+      return { success: false, status: 422, errors: refundValidation.errors };
+    }
+    updatePayload.refundReason = data.refundReason.trim();
   }
 
   const updated = await PaymentRepository.update(id, updatePayload);

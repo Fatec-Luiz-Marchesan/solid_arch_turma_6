@@ -3,7 +3,7 @@ async function listPayments({ user, PaymentRepository }) {
     return { success: false, status: 401, errors: ['Usuário não autenticado!'] };
   }
 
-  const payments = await PaymentRepository.findByUser(user._id);
+  const payments = await PaymentRepository.findActiveByUser(user._id);
   return { success: true, status: 200, payments };
 }
 

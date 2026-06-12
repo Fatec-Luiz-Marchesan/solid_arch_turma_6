@@ -3,6 +3,7 @@ const ALLOWED_STATUS = ['pending', 'completed', 'refunded'];
 const ALLOWED_CURRENCIES = ['BRL', 'USD', 'EUR'];
 const MAX_AMOUNT = 1000000;
 const TRANSACTION_ID_REGEX = /^[A-Za-z0-9-]{8,50}$/;
+const MAX_INSTALLMENTS = 12;
 
 function validatePayment(data) {
   const errors = [];
@@ -39,6 +40,26 @@ function validatePayment(data) {
     errors.push('transactionId deve ser alfanumérico entre 8 e 50 caracteres!');
   }
 
+  if (data.installments !== undefined) {
+    if (!Number.isInteger(data.installments)) {
+      errors.push('installments deve ser um número inteiro!');
+    } else if (data.installments < 1 || data.installments > MAX_INSTALLMENTS) {
+      errors.push(`installments deve estar entre 1 e ${MAX_INSTALLMENTS}!`);
+    } else if (data.installments > 1 && data.method !== 'credit_card') {
+      errors.push('Parcelamento permitido apenas para credit_card!');
+    }
+  }
+
+  if (data.fee !== undefined) {
+    if (typeof data.fee !== 'number' || isNaN(data.fee)) {
+      errors.push('fee deve ser um número!');
+    } else if (data.fee < 0) {
+      errors.push('fee não pode ser negativa!');
+    } else if (data.amount && data.fee > data.amount) {
+      errors.push('fee não pode ser maior que o valor!');
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -55,11 +76,25 @@ function validateStatus(status) {
   return { isValid: true, errors: [] };
 }
 
+function validateRefund(data) {
+  const errors = [];
+  if (!data.refundReason || typeof data.refundReason !== 'string') {
+    errors.push('refundReason é obrigatório para estornar!');
+  } else if (data.refundReason.trim().length < 5) {
+    errors.push('refundReason deve ter pelo menos 5 caracteres!');
+  } else if (data.refundReason.length > 500) {
+    errors.push('refundReason não pode passar de 500 caracteres!');
+  }
+  return { isValid: errors.length === 0, errors };
+}
+
 module.exports = {
   validatePayment,
   validateStatus,
+  validateRefund,
   ALLOWED_METHODS,
   ALLOWED_STATUS,
   ALLOWED_CURRENCIES,
   MAX_AMOUNT,
+  MAX_INSTALLMENTS,
 };

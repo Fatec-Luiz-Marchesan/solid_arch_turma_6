@@ -1,6 +1,6 @@
 async function deletePayment({ id, user, PaymentRepository }) {
   const payment = await PaymentRepository.findById(id);
-  if (!payment) {
+  if (!payment || payment.deletedAt) {
     return { success: false, status: 404, errors: ['Pagamento não encontrado!'] };
   }
 
@@ -16,7 +16,7 @@ async function deletePayment({ id, user, PaymentRepository }) {
     };
   }
 
-  await PaymentRepository.delete(id);
+  await PaymentRepository.update(id, { deletedAt: new Date() });
   return { success: true, status: 200, message: 'Pagamento removido!' };
 }
 

@@ -86,7 +86,7 @@ describe('updatePaymentStatus use case', () => {
     };
     await updatePaymentStatus({
       id: 'p1',
-      data: { status: 'refunded' },
+      data: { status: 'refunded', refundReason: 'Cliente desistiu da adoção' },
       user: { _id: 'u1' },
       PaymentRepository: repo,
     });
@@ -108,4 +108,44 @@ describe('updatePaymentStatus use case', () => {
     const payload = repo.update.mock.calls[0][1];
     expect(payload.processedAt).toBeUndefined();
   });
+
+  it('exige refundReason ao estornar', async () => {
+    const repo = { findById: jest.fn(async () => basePay) };
+    const r = await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'refunded' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.status).toBe(422);
+    expect(r.errors[0]).toMatch(/refundReason/);
+  });
+
+  it('aceita estorno com refundReason válido', async () => {
+    const repo = {
+      findById: jest.fn(async () => basePay),
+      update: jest.fn(async (id, payload) => ({ ...basePay, ...payload })),
+    };
+    const r = await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'refunded', refundReason: 'Pet adotado por outra pessoa' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.success).toBe(true);
+    expect(repo.update.mock.calls[0][1].refundReason).toBe('Pet adotado por outra pessoa');
+  });
+
+  it('retorna 404 quando payment está soft-deleted', async () => {
+    const deleted = { ...basePay, deletedAt: new Date() };
+    const repo = { findById: jest.fn(async () => deleted) };
+    const r = await updatePaymentStatus({
+      id: 'p1',
+      data: { status: 'completed' },
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.status).toBe(404);
+  });
 });
+

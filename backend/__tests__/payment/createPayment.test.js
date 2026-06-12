@@ -84,4 +84,55 @@ describe('createPayment use case', () => {
     });
     expect(repo.create.mock.calls[0][0].processedAt).toBeNull();
   });
+
+  it('aceita installments para credit_card', async () => {
+    const repo = makeRepo();
+    const r = await createPayment({
+      data: { amount: 1200, method: 'credit_card', petId: 'p1', installments: 6 },
+      payer: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.success).toBe(true);
+    expect(repo.create.mock.calls[0][0].installments).toBe(6);
+  });
+
+  it('rejeita installments para pix', async () => {
+    const repo = makeRepo();
+    const r = await createPayment({
+      data: { amount: 1200, method: 'pix', petId: 'p1', installments: 3 },
+      payer: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('default de installments é 1', async () => {
+    const repo = makeRepo();
+    await createPayment({
+      data: { amount: 50, method: 'pix', petId: 'p1' },
+      payer: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].installments).toBe(1);
+  });
+
+  it('aceita fee opcional', async () => {
+    const repo = makeRepo();
+    await createPayment({
+      data: { amount: 100, method: 'pix', petId: 'p1', fee: 3 },
+      payer: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].fee).toBe(3);
+  });
+
+  it('cria com deletedAt null por padrão', async () => {
+    const repo = makeRepo();
+    await createPayment({
+      data: { amount: 50, method: 'pix', petId: 'p1' },
+      payer: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].deletedAt).toBeNull();
+  });
 });

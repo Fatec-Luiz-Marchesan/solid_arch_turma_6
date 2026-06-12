@@ -12,6 +12,8 @@ const PaymentRepository = {
   create: (data) => new Payment(data).save(),
   findByUser: (userId) =>
     Payment.find({ 'payer._id': userId }).sort('-createdAt'),
+  findActiveByUser: (userId) =>
+    Payment.find({ 'payer._id': userId, deletedAt: null }).sort('-createdAt'),
   findById: (id) => Payment.findById(id),
   update: (id, data) => Payment.findByIdAndUpdate(id, data, { new: true }),
   delete: (id) => Payment.findByIdAndDelete(id),

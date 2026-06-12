@@ -1,13 +1,13 @@
 const { describe, it, expect } = require('@jest/globals');
 const { deletePayment } = require('../../usecases/payment/deletePayment');
 
-describe('deletePayment use case', () => {
-  const basePay = { _id: 'p1', payer: { _id: 'u1' }, status: 'pending' };
+describe('deletePayment use case (soft delete)', () => {
+  const basePay = { _id: 'p1', payer: { _id: 'u1' }, status: 'pending', deletedAt: null };
 
-  it('deleta quando usuário é o dono e está pending', async () => {
+  it('faz soft delete quando dono e pending', async () => {
     const repo = {
       findById: jest.fn(async () => basePay),
-      delete: jest.fn(async () => true),
+      update: jest.fn(async () => true),
     };
     const r = await deletePayment({
       id: 'p1',
@@ -15,7 +15,8 @@ describe('deletePayment use case', () => {
       PaymentRepository: repo,
     });
     expect(r.success).toBe(true);
-    expect(repo.delete).toHaveBeenCalledWith('p1');
+    expect(repo.update).toHaveBeenCalled();
+    expect(repo.update.mock.calls[0][1].deletedAt).toBeInstanceOf(Date);
   });
 
   it('rejeita se não é o dono', async () => {
@@ -32,6 +33,17 @@ describe('deletePayment use case', () => {
     const repo = { findById: jest.fn(async () => null) };
     const r = await deletePayment({
       id: 'xx',
+      user: { _id: 'u1' },
+      PaymentRepository: repo,
+    });
+    expect(r.status).toBe(404);
+  });
+
+  it('retorna 404 quando já está soft-deleted', async () => {
+    const deleted = { ...basePay, deletedAt: new Date() };
+    const repo = { findById: jest.fn(async () => deleted) };
+    const r = await deletePayment({
+      id: 'p1',
       user: { _id: 'u1' },
       PaymentRepository: repo,
     });
