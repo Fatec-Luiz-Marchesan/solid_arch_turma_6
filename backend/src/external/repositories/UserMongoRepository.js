@@ -3,7 +3,7 @@ const User = require('../../../models/User')
 
 class UserMongoRepository extends IUserRepository {
   async findByEmail(email) {
-    const doc = await User.findOne({ email })
+     const doc = await User.findOne({ email: { $eq: email } })
     if (!doc) return null
 
     return {
