@@ -1,8 +1,8 @@
-const { validateMessage } = require('../../helpers/validate-message');
+const { normalizeContent } = require('../../helpers/validate-message');
 
 async function updateMessage({ id, data, user, MessageRepository }) {
   const message = await MessageRepository.findById(id);
-  if (!message) {
+  if (!message || message.deletedAt) {
     return { success: false, status: 404, errors: ['Mensagem não encontrada!'] };
   }
 
@@ -14,17 +14,19 @@ async function updateMessage({ id, data, user, MessageRepository }) {
     };
   }
 
-  
-  if (!data.content || data.content.trim().length < 1) {
+  if (!data.content || typeof data.content !== 'string') {
     return { success: false, status: 422, errors: ['Conteúdo inválido!'] };
   }
-  if (data.content.length > 1000) {
+
+  const normalized = normalizeContent(data.content);
+  if (normalized.length < 1) {
+    return { success: false, status: 422, errors: ['Conteúdo inválido!'] };
+  }
+  if (normalized.length > 1000) {
     return { success: false, status: 422, errors: ['Mensagem muito longa!'] };
   }
 
-  const updated = await MessageRepository.update(id, {
-    content: data.content.trim(),
-  });
+  const updated = await MessageRepository.update(id, { content: normalized });
   return { success: true, status: 200, message: updated };
 }
 

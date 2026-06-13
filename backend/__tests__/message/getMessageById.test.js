@@ -56,4 +56,15 @@ describe('getMessageById use case', () => {
     });
     expect(r.status).toBe(422);
   });
+
+  it('retorna 404 quando mensagem está soft-deleted', async () => {
+    const deleted = { ...baseMsg, deletedAt: new Date() };
+    const repo = { findById: jest.fn(async () => deleted) };
+    const r = await getMessageById({
+      id: 'm1',
+      user: { _id: 'u1' },
+      MessageRepository: repo,
+    });
+    expect(r.status).toBe(404);
+  });
 });

@@ -251,6 +251,26 @@ Pagamentos têm valor contábil e regulatório. Apagar de verdade pode quebrar r
 
 ---
 
+---
+
+## 🔧 Atualização do Model de Message (Task 53)
+
+Melhorias estruturais no modelo de mensagens para suportar prioridade, rastreamento de leitura e exclusão lógica.
+
+### Novos campos
+
+- **priority** — Prioridade da mensagem (`low`, `normal`, `high`). Padrão: `normal`.
+- **readAt** — Data exata em que a mensagem foi marcada como lida. Preenchido quando o destinatário visualiza.
+- **deletedAt** — Data de exclusão lógica. Mensagens removidas não aparecem nas listagens.
+
+### Outras melhorias
+
+- O conteúdo agora é normalizado automaticamente: espaços excessivos entre palavras são reduzidos a um, e espaços nas pontas são removidos.
+- Índice adicionado em `receiver._id` + `read` para acelerar a busca por mensagens não lidas.
+- Exclusão de mensagem agora é soft delete (mantém o histórico para auditoria).
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54

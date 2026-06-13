@@ -4,7 +4,7 @@ async function getMessageById({ id, user, MessageRepository }) {
   }
 
   const message = await MessageRepository.findById(id);
-  if (!message) {
+  if (!message || message.deletedAt) {
     return { success: false, status: 404, errors: ['Mensagem não encontrada!'] };
   }
 

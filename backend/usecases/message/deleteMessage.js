@@ -1,6 +1,6 @@
 async function deleteMessage({ id, user, MessageRepository }) {
   const message = await MessageRepository.findById(id);
-  if (!message) {
+  if (!message || message.deletedAt) {
     return { success: false, status: 404, errors: ['Mensagem não encontrada!'] };
   }
 
@@ -12,7 +12,7 @@ async function deleteMessage({ id, user, MessageRepository }) {
     };
   }
 
-  await MessageRepository.delete(id);
+  await MessageRepository.update(id, { deletedAt: new Date() });
   return { success: true, status: 200, message: 'Mensagem removida!' };
 }
 
