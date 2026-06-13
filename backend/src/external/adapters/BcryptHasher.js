@@ -8,6 +8,10 @@ class BcryptHasher {
   async hash(plainText) {
     return bcrypt.hash(plainText, this.salt)
   }
+
+  async compare(plainText, hash) {
+    return bcrypt.compare(plainText, hash)
+  }
 }
 
 module.exports = { BcryptHasher }
