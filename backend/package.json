@@ -4,13 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./index.js localhost 5000",
-    "test": "cross-env NODE_ENV=test jest --runInBand",
-    "test:unit": "cross-env NODE_ENV=test jest --selectProjects unit --runInBand",
-    "test:int": "cross-env NODE_ENV=test jest --selectProjects integration --runInBand",
-    "test:watch": "cross-env NODE_ENV=test jest --watch --runInBand",
-    "test:cov": "cross-env NODE_ENV=test jest --coverage --runInBand",
-    "test:ci": "cross-env NODE_ENV=test jest --coverage --ci --runInBand --reporters=default"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ./index.js localhost 5000"
   },
   "author": "Matheus <matheus@horadecodar.com.br> (http://www.horadecodar.com.br/)",
   "license": "MIT",
@@ -23,11 +18,5 @@
     "mongoose": "^6.0.6",
     "multer": "^2.1.1",
     "nodemon": "^2.0.12"
-  },
-  "devDependencies": {
-    "cross-env": "^10.1.0",
-    "jest": "^30.4.2",
-    "mongodb-memory-server": "^11.2.0",
-    "supertest": "^7.2.2"
   }
 }

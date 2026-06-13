@@ -1,11 +1,22 @@
-const app = require('./src/external/frameworks/app')
+const express = require('express')
+const cors = require('cors')
 
-const PORT = process.env.PORT || 5000
+const app = express()
 
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
-        console.log('Servidor rodando na porta ${PORT}')
-    })
-}
+// Config JSON response
+app.use(express.json())
 
-module.exports = app
+// Solve CORS
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }))
+
+// Public folder for images
+app.use(express.static('public'))
+
+// Routes
+const PetRoutes = require('./routes/PetRoutes')
+const UserRoutes = require('./routes/UserRoutes')
+
+app.use('/pets', PetRoutes)
+app.use('/users', UserRoutes)
+
+app.listen(5000)

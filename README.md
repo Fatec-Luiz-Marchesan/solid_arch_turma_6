@@ -1,4 +1,4 @@
-# Documentação de Tarefas (Backlog) DEV1
+# Documentação de Tarefas (Backlog)
 
 Este documento contém 240 tarefas para o desenvolvimento e evolução do projeto `solid_arch_turma_6`, utilizando **Node.js, Mongoose e MongoDB**.
 A estrutura do projeto atual é baseada em **Clean Architecture, TDD e Princípios SOLID**.
@@ -5621,30 +5621,3 @@ Interferir no Model de Message para implementar aprimoramento de segurança.
 
 ---
 
-## 🧪 Testes e Cobertura (Jest)
-
-O backend usa **Jest** com um *quality gate* de cobertura de 80%.
-
-### Pré-requisitos
-- Node.js 18+
-- A partir da pasta `backend/`, instale as dependências com `npm install`.
-
-### Scripts (rodar dentro de `backend/`)
-
-| Script | O que faz |
-|--------|-----------|
-| `npm test` | Roda toda a suíte com cobertura. |
-| `npm run test:unit` | Apenas testes de unidade. |
-| `npm run test:int` | Apenas testes de integração. |
-| `npm run test:watch` | Modo observador (reexecuta ao salvar). |
-| `npm run test:cov` | Roda com relatório de cobertura. |
-| `npm run test:ci` | Modo CI (usado no pipeline). |
-
-### Gate de cobertura
-A configuração em `backend/jest.config.js` exige **80%** em branches, funções, linhas e statements. Abaixo disso, o processo termina com erro (exit code ≠ 0) — é assim que o pipeline bloqueia merges com cobertura insuficiente.
-
-### Relatório
-Após `npm run test:cov`, o resumo aparece no terminal e um relatório HTML é gerado em `backend/coverage/` (pasta ignorada pelo Git). Abra `backend/coverage/lcov-report/index.html` no navegador para navegar arquivo por arquivo.
-
-### Upload como adapter (DIP)
-O upload de imagens é integrado como **adapter externo** (`src/external/upload/MulterUploadService.js`) que implementa a porta `src/domain/ports/IUploadService.js`. As rotas dependem apenas da abstração `uploadService`, não da biblioteca `multer` — trocar a lib de upload não afeta as camadas internas.

@@ -1,5 +1,0 @@
-# backend/.gitignore
-node_modules
-coverage
-.env
-*.log
