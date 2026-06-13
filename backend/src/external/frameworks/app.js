@@ -16,6 +16,9 @@ const PaymentRoutes = require('../../../routers/PaymentRouters')
 const DietRoutes = require('../../../routers/DietRouters')
 
 app.use('/diets', DietRoutes)
+const AuthRoutes = require('../../../routers/Authrouters')
+
+app.use('/auth', AuthRoutes)
 
 app.use('/payments', PaymentRoutes)
 
