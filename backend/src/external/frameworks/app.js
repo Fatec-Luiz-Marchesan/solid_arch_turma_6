@@ -13,6 +13,9 @@ const AdminRoutes = require('../../../routers/AdminRouters')
 const UserRoutesV2 = require('../../../routers/UserRoutersV2')
 const LocationRoutes = require('../../../routers/LocationRouters')
 const PaymentRoutes = require('../../../routers/PaymentRouters')
+const DietRoutes = require('../../../routers/DietRouters')
+
+app.use('/diets', DietRoutes)
 const AuthRoutes = require('../../../routers/Authrouters')
 
 app.use('/auth', AuthRoutes)
