@@ -6,7 +6,7 @@ const NotificationModel = mongoose.model(
   'Notification',
   new Schema(
     {
-      recipient: {
+      recipientId: {
         type: String,
         required: true,
       },
@@ -14,12 +14,18 @@ const NotificationModel = mongoose.model(
         type: String,
         required: true,
       },
+      priority: {
+        type: String,
+        enum: ['low', 'normal', 'high'],
+        default: 'normal',
+      },
       read: {
         type: Boolean,
         default: false,
       },
-      channel: {
-        type: String,
+      expiresAt: {
+        type: Date,
+        default: null
       },
     },
     { timestamps: true }
