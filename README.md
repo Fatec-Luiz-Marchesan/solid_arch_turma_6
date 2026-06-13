@@ -271,6 +271,38 @@ Melhorias estruturais no modelo de mensagens para suportar prioridade, rastreame
 
 ---
 
+---
+
+## 🧪 Testes de Integração para Payment (Task 14)
+
+Suíte de testes de integração que valida o fluxo completo de Payment através de requisições HTTP simuladas, sem alterar nenhuma regra de negócio.
+
+### O que cobre
+
+- Todos os 5 endpoints (POST, GET lista, GET por id, PATCH status, DELETE)
+- Cenários de sucesso e falha (validação, autorização, regras de transição)
+- Fluxo de ponta a ponta: criar → completar → consultar
+
+### Tecnologia
+
+- **supertest** — simula requisições HTTP no Express sem subir o servidor
+- **Repositório em memória** — `Map` JavaScript simulando uma coleção MongoDB
+
+### Diferença para os testes de unidade
+
+Os testes de unidade (existentes em `__tests__/payment/`) testam cada use case isoladamente com mocks.
+
+Os de integração (em `payment.integration.test.js`) sobem um app Express real e validam que router → controller → use case → repositório funcionam juntos como esperado.
+
+### Como rodar
+
+```bash
+cd backend
+npm run test:coverage
+```
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
