@@ -253,33 +253,21 @@ Pagamentos têm valor contábil e regulatório. Apagar de verdade pode quebrar r
 
 ---
 
-## 👤 Gestão de Conta de User (Task 12)
+## 🔧 Atualização do Model de Message (Task 53)
 
-Funcionalidades novas de gerenciamento da conta do usuário, sem alterar o fluxo de cadastro/login que já existia.
+Melhorias estruturais no modelo de mensagens para suportar prioridade, rastreamento de leitura e exclusão lógica.
 
-### Endpoints
+### Novos campos
 
-Todas as rotas exigem `Authorization: Bearer <token>`.
+- **priority** — Prioridade da mensagem (`low`, `normal`, `high`). Padrão: `normal`.
+- **readAt** — Data exata em que a mensagem foi marcada como lida. Preenchido quando o destinatário visualiza.
+- **deletedAt** — Data de exclusão lógica. Mensagens removidas não aparecem nas listagens.
 
-| Método | Rota | Descrição |
-|---|---|---|
-| PATCH | /users/account/change-password | Altera a senha do usuário logado |
-| DELETE | /users/account | Exclui a conta do usuário logado |
-| GET | /users/search?q=termo | Busca outros usuários por nome ou e-mail |
+### Outras melhorias
 
-### Regras principais
-
-- **Trocar senha:** exige a senha atual, e a nova precisa ter entre 6 e 100 caracteres e ser diferente da atual.
-- **Excluir conta:** exige a senha como confirmação.
-- **Buscar usuários:** termo mínimo de 2 caracteres, retorna até 20 resultados e exclui o próprio usuário.
-
-### Segurança
-
-Trocar senha e excluir conta têm limite de 10 requisições a cada 15 minutos. A busca segue o limite padrão de 100. O termo de busca é escapado antes de virar regex para prevenir injeção.
-
-### Arquitetura
-
-Segue a mesma estrutura usada em Message e Payment: router → controller → use case → repositório injetado. O bcrypt é encapsulado em um adapter (`PasswordHasher`), o que mantém as regras de negócio testáveis sem depender da biblioteca diretamente.
+- O conteúdo agora é normalizado automaticamente: espaços excessivos entre palavras são reduzidos a um, e espaços nas pontas são removidos.
+- Índice adicionado em `receiver._id` + `read` para acelerar a busca por mensagens não lidas.
+- Exclusão de mensagem agora é soft delete (mantém o histórico para auditoria).
 
 ---
 
