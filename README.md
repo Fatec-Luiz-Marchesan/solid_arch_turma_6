@@ -303,6 +303,37 @@ npm run test:coverage
 
 ---
 
+---
+
+## 🧪 Testes de Unidade para Pet (Task 5)
+
+Suíte de testes de unidade do Model de Pet, validando o comportamento do schema Mongoose sem alterar nenhuma regra de negócio.
+
+### O que cobre
+
+Validações nativas do schema:
+- Campos obrigatórios: `name`, `age`, `weight`, `color`, `images`
+- Tipos e coerção automática
+- Campos opcionais: `description`, `available`, `user`, `adopter`
+- Comportamento de `timestamps`
+- Cenários combinados (múltiplos erros)
+
+### Estratégia
+
+- Usa `validateSync()` do Mongoose para validar sem precisar de MongoDB
+- Testes 100% isolados (não tocam nenhuma camada superior)
+- Padrão AAA (Arrange, Act, Assert)
+- Mais de 25 casos de teste
+
+### Como rodar
+
+​```bash
+cd backend
+npm run test:coverage
+​```
+
+---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
