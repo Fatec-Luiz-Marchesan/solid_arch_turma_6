@@ -247,7 +247,9 @@ Segunda iteração de melhorias no Model de Payment, adicionando parcelamento, t
 Pagamentos têm valor contábil e regulatório. Apagar de verdade pode quebrar relatórios e auditorias. A abordagem de soft delete mantém o histórico íntegro.
 
 ---
+---
 
+## 🔔 Notificações (Task 78)
 ---
 
 ## 🔧 Atualização do Model de Message (Task 53)
@@ -332,6 +334,77 @@ npm run test:coverage
 ---
 
 
+Sistema completo de notificações multi-canal com suporte a in-app, email e push. Pode ser disparado por outros módulos do sistema (Message, Payment, etc.) ou manualmente.
+
+### Tipos de notificação
+
+`message_received`, `payment_completed`, `payment_refunded`, `pet_adopted`, `pet_interest`, `account_update`, `system`
+
+### Canais suportados
+
+- `in_app` — armazenada no banco e visível na UI
+- `email` — placeholder pronto para integração (SendGrid, SES, etc.)
+- `push` — placeholder pronto para integração (FCM, OneSignal, etc.)
+
+### Estados
+
+- `unread` — recém-chegada
+- `read` — visualizada
+- `archived` — arquivada pelo usuário
+- `dismissed` — descartada
+
+### Endpoints
+
+Todas exigem `Authorization: Bearer <token>`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /notifications | Cria uma nova notificação |
+| GET | /notifications | Lista (suporta filtros `type`, `status`, `priority`, `fromDate`, `toDate`, `limit`) |
+| GET | /notifications/unread-count | Retorna contagem de não-lidas |
+| PATCH | /notifications/mark-all-read | Marca todas como lidas em massa |
+| GET | /notifications/:id | Detalhe |
+| PATCH | /notifications/:id/read | Marca uma como lida |
+| PATCH | /notifications/:id/archive | Arquiva |
+| DELETE | /notifications/:id | Soft delete |
+
+### Recursos avançados
+
+- **Dispatcher injetável** — adapters por canal seguem DIP, podem ser trocados sem alterar regra de negócio
+- **Degradação graciosa** — se o canal externo falha, a notificação ainda é persistida
+- **Filtros flexíveis** — combinação de tipo, status, prioridade, intervalo de data e limite
+- **Expiração automática** — campo `expiresAt` com TTL no MongoDB
+- **Soft delete** — preserva histórico para auditoria
+- **Idempotência** — marcar como lida duas vezes não gera erro nem múltiplas escritas
+
+### Arquitetura
+
+Mesma da Message e Payment, com camada extra de `Dispatcher`:
+
+---
+---
+
+## Rodando com Docker
+
+Pré-requisitos: Docker e Docker Compose.
+
+# Sobe a API (porta 5000) + MongoDB
+docker compose up --build
+
+A API fica em http://localhost:5000 e o MongoDB em localhost:27017.
+Para parar: docker compose down (use -v para apagar os dados do banco).
+
+### Decisão arquitetural
+O Docker atua na camada mais externa (Frameworks & Drivers): empacota a
+aplicação e provisiona o MongoDB como dependência de infraestrutura. O domínio
+e os Use Cases não têm conhecimento do Docker nem do banco — os use cases
+(ex: usecases/message) dependem de uma abstração de repositório, e o
+repositório concreto com Mongoose é injetado pelo controller (DIP). A única
+alteração de código foi em db/conn.js, que passou a ler a URL do banco de uma
+variável de ambiente (MONGO_URL), permanecendo na camada de infraestrutura.
+Entidades e Use Cases ficaram intactos.
+
+---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 

@@ -28,3 +28,7 @@ app.use('/settings', SettingsRoutes)
 app.use('/user', UserAccountRoutes)
 
 app.listen(5000)
+
+const NotificationRoutes = require('./routers/NotificationRouters');
+
+app.use('/notifications', NotificationRoutes);

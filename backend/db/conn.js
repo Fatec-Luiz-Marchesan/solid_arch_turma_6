@@ -8,6 +8,7 @@ async function main() {
   console.log('Conectou com Mongoose!')
 }
 
+
 if (process.env.NODE_ENV !== 'test') {
   main().catch((err) => console.log(err))
 }
