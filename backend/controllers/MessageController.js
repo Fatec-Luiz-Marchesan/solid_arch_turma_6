@@ -14,6 +14,11 @@ const MessageRepository = {
     Message.find({
       $or: [{ 'sender._id': userId }, { 'receiver._id': userId }],
     }).sort('-createdAt'),
+  findActiveByUser: (userId) =>
+    Message.find({
+      deletedAt: null,
+      $or: [{ 'sender._id': userId }, { 'receiver._id': userId }],
+    }).sort('-createdAt'),
   findById: (id) => Message.findById(id),
   update: (id, data) => Message.findByIdAndUpdate(id, data, { new: true }),
   delete: (id) => Message.findByIdAndDelete(id),

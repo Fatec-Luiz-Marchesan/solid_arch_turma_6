@@ -8,7 +8,7 @@ async function main() {
   console.log('Conectou com Mongoose!')
 }
 
-// Não conecta automaticamente durante os testes (mantém o CI limpo)
+
 if (process.env.NODE_ENV !== 'test') {
   main().catch((err) => console.log(err))
 }

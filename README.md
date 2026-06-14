@@ -65,11 +65,8 @@ Implementação completa do fluxo de mensagens entre usuários sobre pets dispon
 
 ### Autenticação
 
-Todas as rotas exigem o header de autenticação:
+Todas as rotas exigem o header `Authorization: Bearer <token>`.
 
-```
-Authorization: Bearer <token>
-​```
 ### Endpoints disponíveis
 
 | Método | Rota | Descrição |
@@ -84,13 +81,13 @@ Authorization: Bearer <token>
 
 POST /messages
 
-```json
+​```json
 {
   "content": "Olá, ainda tem o pet disponível para adoção?",
   "receiverId": "65f1a2b3c4d5e6f7a8b9c0d1",
   "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
 }
-```
+​```
 
 ### Regras de validação
 
@@ -104,7 +101,7 @@ POST /messages
 
 A funcionalidade foi construída respeitando os princípios da Clean Architecture:
 
-- **Routers** (`routers/MessageRouters.js`) — define as rotas HTTP do Express
+- **Routers** (`routers/MessageRouter.js`) — define as rotas HTTP do Express
 - **Controllers** (`controllers/MessageController.js`) — recebe a requisição HTTP e delega para o caso de uso correspondente
 - **Use Cases** (`usecases/message/`) — concentra toda a regra de negócio, sem depender de Express ou Mongoose diretamente
 - **Helpers** (`helpers/validate-message.js`) — funções puras de validação
@@ -253,6 +250,89 @@ Pagamentos têm valor contábil e regulatório. Apagar de verdade pode quebrar r
 ---
 
 ## 🔔 Notificações (Task 78)
+---
+
+## 🔧 Atualização do Model de Message (Task 53)
+
+Melhorias estruturais no modelo de mensagens para suportar prioridade, rastreamento de leitura e exclusão lógica.
+
+### Novos campos
+
+- **priority** — Prioridade da mensagem (`low`, `normal`, `high`). Padrão: `normal`.
+- **readAt** — Data exata em que a mensagem foi marcada como lida. Preenchido quando o destinatário visualiza.
+- **deletedAt** — Data de exclusão lógica. Mensagens removidas não aparecem nas listagens.
+
+### Outras melhorias
+
+- O conteúdo agora é normalizado automaticamente: espaços excessivos entre palavras são reduzidos a um, e espaços nas pontas são removidos.
+- Índice adicionado em `receiver._id` + `read` para acelerar a busca por mensagens não lidas.
+- Exclusão de mensagem agora é soft delete (mantém o histórico para auditoria).
+
+---
+
+---
+
+## 🧪 Testes de Integração para Payment (Task 14)
+
+Suíte de testes de integração que valida o fluxo completo de Payment através de requisições HTTP simuladas, sem alterar nenhuma regra de negócio.
+
+### O que cobre
+
+- Todos os 5 endpoints (POST, GET lista, GET por id, PATCH status, DELETE)
+- Cenários de sucesso e falha (validação, autorização, regras de transição)
+- Fluxo de ponta a ponta: criar → completar → consultar
+
+### Tecnologia
+
+- **supertest** — simula requisições HTTP no Express sem subir o servidor
+- **Repositório em memória** — `Map` JavaScript simulando uma coleção MongoDB
+
+### Diferença para os testes de unidade
+
+Os testes de unidade (existentes em `__tests__/payment/`) testam cada use case isoladamente com mocks.
+
+Os de integração (em `payment.integration.test.js`) sobem um app Express real e validam que router → controller → use case → repositório funcionam juntos como esperado.
+
+### Como rodar
+
+```bash
+cd backend
+npm run test:coverage
+```
+
+---
+
+---
+
+## 🧪 Testes de Unidade para Pet (Task 5)
+
+Suíte de testes de unidade do Model de Pet, validando o comportamento do schema Mongoose sem alterar nenhuma regra de negócio.
+
+### O que cobre
+
+Validações nativas do schema:
+- Campos obrigatórios: `name`, `age`, `weight`, `color`, `images`
+- Tipos e coerção automática
+- Campos opcionais: `description`, `available`, `user`, `adopter`
+- Comportamento de `timestamps`
+- Cenários combinados (múltiplos erros)
+
+### Estratégia
+
+- Usa `validateSync()` do Mongoose para validar sem precisar de MongoDB
+- Testes 100% isolados (não tocam nenhuma camada superior)
+- Padrão AAA (Arrange, Act, Assert)
+- Mais de 25 casos de teste
+
+### Como rodar
+
+​```bash
+cd backend
+npm run test:coverage
+​```
+
+---
+
 
 Sistema completo de notificações multi-canal com suporte a in-app, email e push. Pode ser disparado por outros módulos do sistema (Message, Payment, etc.) ou manualmente.
 

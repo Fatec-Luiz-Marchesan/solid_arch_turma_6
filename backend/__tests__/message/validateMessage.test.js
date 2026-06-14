@@ -1,5 +1,5 @@
 const { describe, it, expect } = require('@jest/globals');
-const { validateMessage } = require('../../helpers/validate-message');
+const { validateMessage, normalizeContent } = require('../../helpers/validate-message');
 
 describe('validateMessage helper', () => {
   it('aceita mensagem válida', () => {
@@ -41,5 +41,58 @@ describe('validateMessage helper', () => {
   it('rejeita sem petId', () => {
     const r = validateMessage({ content: 'oi', receiverId: 'a' });
     expect(r.isValid).toBe(false);
+  });
+
+  it('aceita priority válida', () => {
+    const r = validateMessage({
+      content: 'Oi',
+      receiverId: 'a',
+      petId: 'b',
+      priority: 'high',
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita priority inválida', () => {
+    const r = validateMessage({
+      content: 'Oi',
+      receiverId: 'a',
+      petId: 'b',
+      priority: 'urgent',
+    });
+    expect(r.isValid).toBe(false);
+  });
+
+  it('aceita conteúdo válido após normalização (espaços excessivos)', () => {
+    const r = validateMessage({
+      content: '  Oi    tudo    bem?  ',
+      receiverId: 'a',
+      petId: 'b',
+    });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('rejeita conteúdo que vira vazio após normalização', () => {
+    const r = validateMessage({
+      content: '     ',
+      receiverId: 'a',
+      petId: 'b',
+    });
+    expect(r.isValid).toBe(false);
+  });
+});
+
+describe('normalizeContent helper', () => {
+  it('remove espaços excessivos entre palavras', () => {
+    expect(normalizeContent('oi    tudo   bem')).toBe('oi tudo bem');
+  });
+
+  it('faz trim das pontas', () => {
+    expect(normalizeContent('   oi   ')).toBe('oi');
+  });
+
+  it('retorna o valor original se não for string', () => {
+    expect(normalizeContent(123)).toBe(123);
+    expect(normalizeContent(null)).toBe(null);
   });
 });
