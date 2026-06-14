@@ -61,4 +61,30 @@ describe('updateMessage use case', () => {
     });
     expect(r.status).toBe(422);
   });
+
+  it('retorna 404 quando mensagem está soft-deleted', async () => {
+    const deleted = { ...baseMsg, deletedAt: new Date() };
+    const repo = { findById: jest.fn(async () => deleted) };
+    const r = await updateMessage({
+      id: 'm1',
+      data: { content: 'novo' },
+      user: { _id: 'u1' },
+      MessageRepository: repo,
+    });
+    expect(r.status).toBe(404);
+  });
+
+  it('normaliza espaços excessivos no update', async () => {
+    const repo = {
+      findById: jest.fn(async () => baseMsg),
+      update: jest.fn(async (id, data) => ({ ...baseMsg, ...data })),
+    };
+    await updateMessage({
+      id: 'm1',
+      data: { content: '  ola    mundo  ' },
+      user: { _id: 'u1' },
+      MessageRepository: repo,
+    });
+    expect(repo.update.mock.calls[0][1].content).toBe('ola mundo');
+  });
 });

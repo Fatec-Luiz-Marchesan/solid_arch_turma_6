@@ -1,4 +1,4 @@
-const { validateMessage } = require('../../helpers/validate-message');
+const { validateMessage, normalizeContent } = require('../../helpers/validate-message');
 
 async function createMessage({ data, sender, MessageRepository }) {
   const validation = validateMessage(data);
@@ -19,11 +19,14 @@ async function createMessage({ data, sender, MessageRepository }) {
   }
 
   const message = await MessageRepository.create({
-    content: data.content.trim(),
+    content: normalizeContent(data.content),
     sender: { _id: sender._id, name: sender.name },
     receiver: { _id: data.receiverId },
     pet: { _id: data.petId },
     read: false,
+    readAt: null,
+    priority: data.priority || 'normal',
+    deletedAt: null,
   });
 
   return { success: true, status: 201, message };

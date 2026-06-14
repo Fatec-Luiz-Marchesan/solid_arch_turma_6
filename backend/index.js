@@ -18,11 +18,13 @@ const UserRoutes = require('./routes/UserRoutes')
 const MessageRoutes = require('./routers/MessageRouters')
 const PaymentRoutes = require('./routers/PaymentRouters')
 const SettingsRoutes = require('./routers/SettingsRouters')
+const UserAccountRoutes = require('./routers/UserAccountRouters')
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
 app.use('/messages', MessageRoutes)
 app.use('/payments', PaymentRoutes)
 app.use('/settings', SettingsRoutes)
+app.use('/user', UserAccountRoutes)
 
 app.listen(5000)

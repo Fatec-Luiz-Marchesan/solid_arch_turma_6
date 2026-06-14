@@ -8,7 +8,7 @@ const { getPaymentById } = require('../usecases/payment/getPaymentById');
 const { updatePaymentStatus } = require('../usecases/payment/updatePaymentStatus');
 const { deletePayment } = require('../usecases/payment/deletePayment');
 
-const PaymentRepository = {
+const defaultRepository = {
   create: (data) => new Payment(data).save(),
   findByUser: (userId) =>
     Payment.find({ 'payer._id': userId }).sort('-createdAt'),
@@ -19,7 +19,20 @@ const PaymentRepository = {
   delete: (id) => Payment.findByIdAndDelete(id),
 };
 
-module.exports = class PaymentController {
+let PaymentRepository = defaultRepository;
+
+function setRepository(repo) {
+  PaymentRepository = repo || defaultRepository;
+}
+
+function resetRepository() {
+  PaymentRepository = defaultRepository;
+}
+
+module.exports.setRepository = setRepository;
+module.exports.resetRepository = resetRepository;
+
+class PaymentController {
   static async create(req, res) {
     const token = getToken(req);
     const payer = await getUserByToken(token);
@@ -98,4 +111,8 @@ module.exports = class PaymentController {
     }
     return res.status(200).json({ message: result.message });
   }
-};
+}
+
+module.exports = PaymentController;
+module.exports.setRepository = setRepository;
+module.exports.resetRepository = resetRepository;
