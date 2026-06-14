@@ -65,11 +65,8 @@ Implementação completa do fluxo de mensagens entre usuários sobre pets dispon
 
 ### Autenticação
 
-Todas as rotas exigem o header de autenticação:
+Todas as rotas exigem o header `Authorization: Bearer <token>`.
 
-```
-Authorization: Bearer <token>
-​```
 ### Endpoints disponíveis
 
 | Método | Rota | Descrição |
@@ -84,13 +81,13 @@ Authorization: Bearer <token>
 
 POST /messages
 
-```json
+​```json
 {
   "content": "Olá, ainda tem o pet disponível para adoção?",
   "receiverId": "65f1a2b3c4d5e6f7a8b9c0d1",
   "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
 }
-```
+​```
 
 ### Regras de validação
 
@@ -104,7 +101,7 @@ POST /messages
 
 A funcionalidade foi construída respeitando os princípios da Clean Architecture:
 
-- **Routers** (`routers/MessageRouters.js`) — define as rotas HTTP do Express
+- **Routers** (`routers/MessageRouter.js`) — define as rotas HTTP do Express
 - **Controllers** (`controllers/MessageController.js`) — recebe a requisição HTTP e delega para o caso de uso correspondente
 - **Use Cases** (`usecases/message/`) — concentra toda a regra de negócio, sem depender de Express ou Mongoose diretamente
 - **Helpers** (`helpers/validate-message.js`) — funções puras de validação
