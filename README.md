@@ -65,11 +65,8 @@ Implementação completa do fluxo de mensagens entre usuários sobre pets dispon
 
 ### Autenticação
 
-Todas as rotas exigem o header de autenticação:
+Todas as rotas exigem o header `Authorization: Bearer <token>`.
 
-```
-Authorization: Bearer <token>
-​```
 ### Endpoints disponíveis
 
 | Método | Rota | Descrição |
@@ -84,13 +81,13 @@ Authorization: Bearer <token>
 
 POST /messages
 
-```json
+​```json
 {
   "content": "Olá, ainda tem o pet disponível para adoção?",
   "receiverId": "65f1a2b3c4d5e6f7a8b9c0d1",
   "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
 }
-```
+​```
 
 ### Regras de validação
 
@@ -104,7 +101,7 @@ POST /messages
 
 A funcionalidade foi construída respeitando os princípios da Clean Architecture:
 
-- **Routers** (`routers/MessageRouters.js`) — define as rotas HTTP do Express
+- **Routers** (`routers/MessageRouter.js`) — define as rotas HTTP do Express
 - **Controllers** (`controllers/MessageController.js`) — recebe a requisição HTTP e delega para o caso de uso correspondente
 - **Use Cases** (`usecases/message/`) — concentra toda a regra de negócio, sem depender de Express ou Mongoose diretamente
 - **Helpers** (`helpers/validate-message.js`) — funções puras de validação
@@ -300,6 +297,35 @@ Os de integração (em `payment.integration.test.js`) sobem um app Express real 
 cd backend
 npm run test:coverage
 ```
+
+---
+
+---
+
+## 🧪 Testes de Unidade para User (Task 2)
+
+Suíte de testes de unidade focada nos helpers de autenticação do fluxo de User, sem alterar nenhuma regra de negócio existente.
+
+### O que cobre
+
+- `helpers/get-token.js` — extração do token do header Authorization
+- `helpers/check-token.js` — middleware de validação de JWT
+- `helpers/get-user-by-token.js` — decodificação do JWT e busca do usuário
+- `helpers/create-user-token.js` — geração de JWT e resposta de login
+
+### Estratégia
+
+- Testes 100% isolados (sem MongoDB, sem subir Express)
+- `jsonwebtoken` e o Model User mockados via `jest.mock`
+- Padrão AAA (Arrange, Act, Assert)
+- Cenários de sucesso e falha cobertos em todos os helpers
+
+### Como rodar
+
+​```bash
+cd backend
+npm run test:coverage
+​```
 
 ---
 
