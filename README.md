@@ -302,33 +302,27 @@ npm run test:coverage
 
 ---
 
-## 🧪 Testes de Unidade para User (Task 2)
+## 🧪 Testes de Unidade para Payment (Task 4)
 
-Suíte de testes de unidade focada nos helpers de autenticação do fluxo de User, sem alterar nenhuma regra de negócio existente.
+Suíte de testes de unidade complementando a cobertura do módulo Payment, focando nas camadas que ainda não tinham testes isolados.
 
 ### O que cobre
 
-- `helpers/get-token.js` — extração do token do header Authorization
-- `helpers/check-token.js` — middleware de validação de JWT
-- `helpers/get-user-by-token.js` — decodificação do JWT e busca do usuário
-- `helpers/create-user-token.js` — geração de JWT e resposta de login
+- **Model (`Payment.js`)** — validações nativas do schema (enums, mins, maxs, regex de transactionId), defaults e campo virtual `netAmount`
+- **Controller (`PaymentController.js`)** — comportamento de cada método com use cases mockados, garantindo que erros e sucessos são traduzidos corretamente para HTTP
 
 ### Estratégia
 
-- Testes 100% isolados (sem MongoDB, sem subir Express)
-- `jsonwebtoken` e o Model User mockados via `jest.mock`
-- Padrão AAA (Arrange, Act, Assert)
-- Cenários de sucesso e falha cobertos em todos os helpers
+- **Model**: usa `validateSync()` do Mongoose para validar sem precisar de MongoDB rodando
+- **Controller**: todos os use cases e helpers de auth são mockados via `jest.mock`, garantindo isolamento total
 
-### Como rodar
+### Diferença das outras suítes
 
-​```bash
-cd backend
-npm run test:coverage
-​```
+- `__tests__/payment/` (Tasks 29/52/104) → testes dos use cases isoladamente
+- `__tests__/payment/payment.integration.test.js` (Task 14) → testes de integração HTTP
+- `__tests__/payment-unit/` (Task 4) → testes de unidade do Model e do Controller
 
 ---
-
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
