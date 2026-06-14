@@ -302,27 +302,35 @@ npm run test:coverage
 
 ---
 
-## 🧪 Testes de Unidade para Payment (Task 4)
+## 🧪 Testes de Unidade para Pet (Task 5)
 
-Suíte de testes de unidade complementando a cobertura do módulo Payment, focando nas camadas que ainda não tinham testes isolados.
+Suíte de testes de unidade do Model de Pet, validando o comportamento do schema Mongoose sem alterar nenhuma regra de negócio.
 
 ### O que cobre
 
-- **Model (`Payment.js`)** — validações nativas do schema (enums, mins, maxs, regex de transactionId), defaults e campo virtual `netAmount`
-- **Controller (`PaymentController.js`)** — comportamento de cada método com use cases mockados, garantindo que erros e sucessos são traduzidos corretamente para HTTP
+Validações nativas do schema:
+- Campos obrigatórios: `name`, `age`, `weight`, `color`, `images`
+- Tipos e coerção automática
+- Campos opcionais: `description`, `available`, `user`, `adopter`
+- Comportamento de `timestamps`
+- Cenários combinados (múltiplos erros)
 
 ### Estratégia
 
-- **Model**: usa `validateSync()` do Mongoose para validar sem precisar de MongoDB rodando
-- **Controller**: todos os use cases e helpers de auth são mockados via `jest.mock`, garantindo isolamento total
+- Usa `validateSync()` do Mongoose para validar sem precisar de MongoDB
+- Testes 100% isolados (não tocam nenhuma camada superior)
+- Padrão AAA (Arrange, Act, Assert)
+- Mais de 25 casos de teste
 
-### Diferença das outras suítes
+### Como rodar
 
-- `__tests__/payment/` (Tasks 29/52/104) → testes dos use cases isoladamente
-- `__tests__/payment/payment.integration.test.js` (Task 14) → testes de integração HTTP
-- `__tests__/payment-unit/` (Task 4) → testes de unidade do Model e do Controller
+​```bash
+cd backend
+npm run test:coverage
+​```
 
 ---
+
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
