@@ -303,6 +303,29 @@ npm run test:coverage
 
 ---
 
+---
+
+## 🧪 Testes de Unidade para Payment (Task 4)
+
+Suíte de testes de unidade complementando a cobertura do módulo Payment, focando nas camadas que ainda não tinham testes isolados.
+
+### O que cobre
+
+- **Model (`Payment.js`)** — validações nativas do schema (enums, mins, maxs, regex de transactionId), defaults e campo virtual `netAmount`
+- **Controller (`PaymentController.js`)** — comportamento de cada método com use cases mockados, garantindo que erros e sucessos são traduzidos corretamente para HTTP
+
+### Estratégia
+
+- **Model**: usa `validateSync()` do Mongoose para validar sem precisar de MongoDB rodando
+- **Controller**: todos os use cases e helpers de auth são mockados via `jest.mock`, garantindo isolamento total
+
+### Diferença das outras suítes
+
+- `__tests__/payment/` (Tasks 29/52/104) → testes dos use cases isoladamente
+- `__tests__/payment/payment.integration.test.js` (Task 14) → testes de integração HTTP
+- `__tests__/payment-unit/` (Task 4) → testes de unidade do Model e do Controller
+
+---
 
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
