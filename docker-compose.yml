@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ./backend
+    command: npm start          # nodemon = hot reload no dev
+    ports:
+      - "5000:5000"
+    environment:
+      MONGO_URL: mongodb://mongo:27017/getapetref
+      NODE_ENV: development
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodata:
