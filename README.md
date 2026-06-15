@@ -382,6 +382,162 @@ Todas exigem `Authorization: Bearer <token>`.
 Mesma da Message e Payment, com camada extra de `Dispatcher`:
 
 ---
+
+---
+
+## 🥗 Módulo de Dietas (Task 35)
+
+Implementação completa do fluxo de dietas para pets. Permite cadastrar, consultar, atualizar e remover planos alimentares, com validação rigorosa, soft delete e proteção por autenticação.
+
+### Funcionalidades
+
+- Criação de uma dieta com nome, tipo, objetivo, calorias diárias, duração e restrições alimentares
+- Listagem de todas as dietas ativas, com filtro opcional por tipo via query string
+- Consulta de uma dieta específica por ID
+- Atualização parcial (PATCH) — apenas os campos enviados são alterados
+- Remoção lógica (soft delete): a dieta some da listagem mas permanece no banco para auditoria
+
+### Tipos de dieta aceitos
+
+`weight-loss` · `weight-gain` · `maintenance` · `high-protein` · `low-carb` · `vegan` · `other`
+
+### Autenticação
+
+- Leitura (`GET /diets` e `GET /diets/:id`) — pública, sem token
+- Escrita (`POST`, `PATCH`, `DELETE`) — exige `Authorization: Bearer <token>`
+
+### Endpoints
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| POST | /diets | sim | Cria uma nova dieta |
+| GET | /diets | não | Lista dietas ativas (suporta `?type=<tipo>`) |
+| GET | /diets/:id | não | Detalhe de uma dieta |
+| PATCH | /diets/:id | sim | Atualiza campos da dieta |
+| DELETE | /diets/:id | sim | Soft delete da dieta |
+
+### Exemplos de requisição
+
+**POST /diets** — cria uma dieta:
+
+```json
+{
+  "name": "Low Carb Avançada",
+  "type": "low-carb",
+  "goal": "Perder 5kg em 3 meses",
+  "dailyCalories": 1800,
+  "durationDays": 90,
+  "restrictions": ["glúten", "lactose"],
+  "notes": "Evitar carboidratos simples após as 18h."
+}
+```
+
+Resposta `201`:
+
+```json
+{
+  "message": "Dieta criada!",
+  "data": {
+    "_id": "664abc123...",
+    "name": "Low Carb Avançada",
+    "type": "low-carb",
+    "goal": "Perder 5kg em 3 meses",
+    "dailyCalories": 1800,
+    "durationDays": 90,
+    "restrictions": ["glúten", "lactose"],
+    "notes": "Evitar carboidratos simples após as 18h.",
+    "deletedAt": null,
+    "createdAt": "2026-06-15T10:00:00.000Z"
+  }
+}
+```
+
+**GET /diets?type=vegan** — filtra por tipo:
+
+```json
+{
+  "diets": [
+    { "_id": "664def456...", "name": "Dieta Vegana", "type": "vegan" }
+  ]
+}
+```
+
+**PATCH /diets/:id** — atualização parcial:
+
+```json
+{ "dailyCalories": 2200, "notes": "Sem açúcar refinado." }
+```
+
+Resposta `200`:
+
+```json
+{
+  "message": "Dieta atualizada!",
+  "data": { "dailyCalories": 2200, "notes": "Sem açúcar refinado.", ... }
+}
+```
+
+### Regras de validação
+
+| Campo | Regra |
+|---|---|
+| `name` | obrigatório, 2–100 caracteres, único (case-insensitive) |
+| `type` | obrigatório, deve ser um dos 7 tipos aceitos |
+| `goal` | opcional, máx. 300 caracteres |
+| `dailyCalories` | opcional, número entre 0 e 10 000 |
+| `durationDays` | opcional, inteiro entre 1 e 3 650 |
+| `restrictions` | opcional, lista de até 20 itens, cada item até 50 caracteres |
+| `notes` | opcional, máx. 1 000 caracteres |
+
+### Regras de negócio
+
+| Cenário | Resposta |
+|---|---|
+| Tipo fora da lista | 422 — tipo inválido |
+| Nome duplicado (case-insensitive) | 409 — já existe |
+| Dieta não encontrada | 404 — não encontrada |
+| Usuário não autenticado | 401 — não autenticado |
+| Filtro com tipo inválido na listagem | 422 — tipo inválido |
+
+### Organização por camadas (Clean Architecture)
+
+```
+backend/
+├── routers/DietRouters.js          → rotas HTTP + rate limiting (100 req/15min)
+├── controllers/DietController.js   → ponte HTTP ↔ use case + injeção de repositório
+├── usecases/diet/
+│   ├── createDiet.js               → valida, checa duplicidade, persiste
+│   ├── listDiets.js                → filtra por tipo, retorna apenas não-deletadas
+│   ├── getDietById.js              → busca por ID, 404 se deletada
+│   ├── updateDiet.js               → validação parcial (PATCH), checa conflito de nome
+│   └── deleteDiet.js               → soft delete (seta deletedAt)
+├── helpers/validate-diet.js        → validações puras e reutilizáveis
+└── models/Diet.js                  → schema Mongoose com índices em type, name e deletedAt
+```
+
+O repositório é injetado via parâmetro nos use cases (Dependency Inversion Principle), permitindo testar toda a regra de negócio com um `Map` em memória, sem banco de dados.
+
+### Testes
+
+Os testes ficam em `backend/__tests__/diet/` e cobrem:
+
+| Arquivo | O que testa |
+|---|---|
+| `validateDiet.test.js` | 25+ casos do helper de validação (todos os campos, modo parcial, normalizeName) |
+| `createDiet.test.js` | use case de criação (autenticação, validação, duplicidade, normalização) |
+| `listDiets.test.js` | listagem e filtro por tipo |
+| `getDietById.test.js` | busca por ID e 404 |
+| `updateDiet.test.js` | atualização parcial, conflito de nome, 404 |
+| `deleteDiet.test.js` | soft delete e 404 |
+| `diet.integration.test.js` | fluxo completo via HTTP (supertest + repositório em memória) |
+
+Para rodar os testes:
+
+```bash
+cd backend
+npm run test:coverage
+```
+
 ---
 
 ## Rodando com Docker

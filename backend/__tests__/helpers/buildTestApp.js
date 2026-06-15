@@ -1,6 +1,6 @@
 const express = require('express');
 
-function buildTestApp({ paymentRepository, breedRepository, reportRepository, currentUser } = {}) {
+function buildTestApp({ paymentRepository, breedRepository, reportRepository, dietRepository, currentUser } = {}) {
   const app = express();
   app.use(express.json());
 
@@ -51,6 +51,20 @@ function buildTestApp({ paymentRepository, breedRepository, reportRepository, cu
     router.delete('/:id', ReportController.delete);
 
     app.use('/reports', router);
+  }
+
+  if (dietRepository) {
+    const DietController = require('../../controllers/DietController');
+    DietController.setRepository(dietRepository);
+
+    const router = express.Router();
+    router.post('/', DietController.create);
+    router.get('/', DietController.list);
+    router.get('/:id', DietController.getById);
+    router.patch('/:id', DietController.update);
+    router.delete('/:id', DietController.delete);
+
+    app.use('/diets', router);
   }
 
   return app;
