@@ -25,15 +25,15 @@ const notificationSchema = new Schema(
     title: {
       type: String,
       required: true,
-      minlength: 1,
+      minlength: 3,
       maxlength: 200,
       trim: true,
     },
     body: {
       type: String,
       required: true,
-      minlength: 1,
-      maxlength: 1000,
+      minlength: 10,
+      maxlength: 2000,
       trim: true,
     },
     recipient: {
@@ -73,6 +73,15 @@ const notificationSchema = new Schema(
       type: Object,
       default: {},
     },
+    scheduledAt: {
+      type: Date,
+      default: null,
+    },
+    retryCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     actionUrl: {
       type: String,
       default: null,
@@ -107,12 +116,33 @@ const notificationSchema = new Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+notificationSchema.virtual('isExpired').get(function () {
+  if (!this.expiresAt) return false;
+  return this.expiresAt.getTime() < Date.now();
+});
+
+notificationSchema.virtual('isRead').get(function () {
+  return this.readAt !== null && this.readAt !== undefined;
+});
+
+notificationSchema.pre('save', function (next) {
+  if (this.scheduledAt && this.scheduledAt.getTime() <= Date.now()) {
+    return next(new Error('scheduledAt deve estar no futuro!'));
+  }
+  next();
+});
 
 notificationSchema.index({ 'recipient._id': 1, status: 1, createdAt: -1 });
 notificationSchema.index({ 'recipient._id': 1, type: 1 });
 notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+notificationSchema.index({ scheduledAt: 1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 

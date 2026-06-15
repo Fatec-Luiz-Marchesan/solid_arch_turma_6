@@ -17,6 +17,7 @@ async function createNotification({ data, sender, NotificationRepository, Notifi
     channels: data.channels || ['in_app'],
     metadata: data.metadata || {},
     actionUrl: data.actionUrl ? data.actionUrl.trim() : null,
+    scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
     status: 'unread',
   });

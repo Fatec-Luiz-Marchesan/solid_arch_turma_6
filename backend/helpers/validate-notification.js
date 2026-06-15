@@ -23,18 +23,18 @@ function validateNotification(data) {
 
   if (!data.title || typeof data.title !== 'string') {
     errors.push('Título é obrigatório!');
-  } else if (data.title.trim().length < 1) {
-    errors.push('Título não pode estar vazio!');
+  } else if (data.title.trim().length < 3) {
+    errors.push('Título deve ter pelo menos 3 caracteres!');
   } else if (data.title.length > 200) {
     errors.push('Título não pode passar de 200 caracteres!');
   }
 
   if (!data.body || typeof data.body !== 'string') {
     errors.push('Corpo é obrigatório!');
-  } else if (data.body.trim().length < 1) {
-    errors.push('Corpo não pode estar vazio!');
-  } else if (data.body.length > 1000) {
-    errors.push('Corpo não pode passar de 1000 caracteres!');
+  } else if (data.body.trim().length < 10) {
+    errors.push('Corpo deve ter pelo menos 10 caracteres!');
+  } else if (data.body.length > 2000) {
+    errors.push('Corpo não pode passar de 2000 caracteres!');
   }
 
   if (!data.recipientId) {
@@ -74,6 +74,15 @@ if (
       errors.push('expiresAt deve ser uma data válida!');
     } else if (exp.getTime() <= Date.now()) {
       errors.push('expiresAt deve estar no futuro!');
+    }
+  }
+
+  if (data.scheduledAt) {
+    const sched = new Date(data.scheduledAt);
+    if (isNaN(sched.getTime())) {
+      errors.push('scheduledAt deve ser uma data válida!');
+    } else if (sched.getTime() <= Date.now()) {
+      errors.push('scheduledAt deve estar no futuro!');
     }
   }
 
