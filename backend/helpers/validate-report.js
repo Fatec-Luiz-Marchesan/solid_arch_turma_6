@@ -1,9 +1,11 @@
 const ALLOWED_TARGET_TYPES = ['pet', 'user', 'message'];
 const ALLOWED_REASONS = ['spam', 'abuse', 'fraud', 'inappropriate', 'other'];
 const ALLOWED_STATUSES = ['pending', 'reviewing', 'resolved', 'dismissed'];
+const ALLOWED_SEVERITIES = ['low', 'medium', 'high'];
 
 const TARGET_ID_MAX = 100;
 const DESCRIPTION_MAX = 1000;
+const MODERATOR_NOTE_MAX = 500;
 
 // Colapsa espaços internos e apara as bordas.
 function normalizeText(value) {
@@ -43,6 +45,24 @@ function validateDescription(value, errors) {
   }
 }
 
+function validateSeverity(value, errors) {
+  if (!ALLOWED_SEVERITIES.includes(value)) {
+    errors.push('Severidade inválida!');
+  }
+}
+
+function validateModeratorNote(value) {
+  const errors = [];
+  if (typeof value !== 'string') {
+    errors.push('moderatorNote deve ser um texto!');
+    return { isValid: false, errors };
+  }
+  if (value.length > MODERATOR_NOTE_MAX) {
+    errors.push(`moderatorNote não pode passar de ${MODERATOR_NOTE_MAX} caracteres!`);
+  }
+  return { isValid: errors.length === 0, errors };
+}
+
 /**
  * Valida os dados de uma denúncia.
  * @param {object} data - payload da denúncia
@@ -71,14 +91,13 @@ function validateReport(data, { partial = false } = {}) {
     validateDescription(d.description, errors);
   }
 
+  if (d.severity !== undefined) {
+    validateSeverity(d.severity, errors);
+  }
+
   return { isValid: errors.length === 0, errors };
 }
 
-/**
- * Valida um valor de status (usado na atualização de moderação).
- * @param {string} status
- * @returns {{ isValid: boolean, errors: string[] }}
- */
 function validateStatus(status) {
   const errors = [];
   if (!ALLOWED_STATUSES.includes(status)) {
@@ -90,10 +109,13 @@ function validateStatus(status) {
 module.exports = {
   validateReport,
   validateStatus,
+  validateModeratorNote,
   normalizeText,
   ALLOWED_TARGET_TYPES,
   ALLOWED_REASONS,
   ALLOWED_STATUSES,
+  ALLOWED_SEVERITIES,
   TARGET_ID_MAX,
   DESCRIPTION_MAX,
+  MODERATOR_NOTE_MAX,
 };

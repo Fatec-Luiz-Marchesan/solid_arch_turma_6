@@ -3,43 +3,47 @@ const { Schema } = mongoose;
 
 const reportSchema = new Schema(
   {
-    // Quem está denunciando (snapshot do usuário autenticado)
     reporter: {
-      type: Object,
-      required: true,
+      _id: { type: String, required: true },
+      name: { type: String, default: '' },
     },
-    // Tipo de entidade alvo da denúncia
     targetType: {
       type: String,
       required: true,
       enum: ['pet', 'user', 'message'],
     },
-    // ID da entidade alvo
     targetId: {
       type: String,
       required: true,
       trim: true,
     },
-    // Motivo padronizado da denúncia
     reason: {
       type: String,
       required: true,
       enum: ['spam', 'abuse', 'fraud', 'inappropriate', 'other'],
     },
-    // Texto livre explicando a denúncia
+    severity: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'low',
+    },
     description: {
       type: String,
       trim: true,
       maxlength: 1000,
       default: '',
     },
-    // Estado do fluxo de moderação
     status: {
       type: String,
       enum: ['pending', 'reviewing', 'resolved', 'dismissed'],
       default: 'pending',
     },
-    // Soft delete
+    moderatorNote: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: '',
+    },
     deletedAt: {
       type: Date,
       default: null,
