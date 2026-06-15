@@ -20,7 +20,13 @@ describe('createSettings use case', () => {
     expect(payload.theme).toBe('system');
     expect(payload.language).toBe('pt-BR');
     expect(payload.timezone).toBe('America/Sao_Paulo');
-    expect(payload.notifications).toEqual({ email: true, push: true, sms: false });
+    expect(payload.dateFormat).toBe('DD/MM/YYYY');
+    expect(payload.timeFormat).toBe('24h');
+    expect(payload.notifications.email).toBe(true);
+    expect(payload.notifications.push).toBe(true);
+    expect(payload.notifications.sms).toBe(false);
+    expect(payload.notifications.quietHours).toEqual({ enabled: false, start: '22:00', end: '08:00' });
+    expect(payload.accessibility).toEqual({ fontSize: 'medium', highContrast: false });
   });
 
   it('falha sem usuário autenticado (401)', async () => {
@@ -51,10 +57,76 @@ describe('createSettings use case', () => {
       user: { _id: 'u1' },
       SettingsRepository: repo,
     });
-    expect(repo.create.mock.calls[0][0].notifications).toEqual({
-      email: true,
-      push: true,
-      sms: true,
+    const n = repo.create.mock.calls[0][0].notifications;
+    expect(n.email).toBe(true);
+    expect(n.push).toBe(true);
+    expect(n.sms).toBe(true);
+    expect(n.quietHours).toEqual({ enabled: false, start: '22:00', end: '08:00' });
+  });
+
+  it('aceita dateFormat e timeFormat customizados', async () => {
+    const repo = makeRepo();
+    await createSettings({
+      data: { dateFormat: 'MM/DD/YYYY', timeFormat: '12h' },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
+    });
+    const p = repo.create.mock.calls[0][0];
+    expect(p.dateFormat).toBe('MM/DD/YYYY');
+    expect(p.timeFormat).toBe('12h');
+  });
+
+  it('rejeita dateFormat inválido (422)', async () => {
+    const r = await createSettings({
+      data: { dateFormat: 'invalid' },
+      user: { _id: 'u1' },
+      SettingsRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+  });
+
+  it('rejeita timeFormat inválido (422)', async () => {
+    const r = await createSettings({
+      data: { timeFormat: '48h' },
+      user: { _id: 'u1' },
+      SettingsRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+  });
+
+  it('aceita accessibility customizado', async () => {
+    const repo = makeRepo();
+    await createSettings({
+      data: { accessibility: { fontSize: 'large', highContrast: true } },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].accessibility).toEqual({
+      fontSize: 'large',
+      highContrast: true,
+    });
+  });
+
+  it('rejeita accessibility.fontSize inválido (422)', async () => {
+    const r = await createSettings({
+      data: { accessibility: { fontSize: 'huge' } },
+      user: { _id: 'u1' },
+      SettingsRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+  });
+
+  it('aceita quietHours configurado', async () => {
+    const repo = makeRepo();
+    await createSettings({
+      data: { notifications: { quietHours: { enabled: true, start: '23:00', end: '07:00' } } },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].notifications.quietHours).toEqual({
+      enabled: true,
+      start: '23:00',
+      end: '07:00',
     });
   });
 
