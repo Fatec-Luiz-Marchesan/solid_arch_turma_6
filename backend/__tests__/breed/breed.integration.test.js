@@ -236,4 +236,222 @@ describe('Breed — testes de integração', () => {
       expect(list.body.breeds).toHaveLength(0);
     });
   });
+
+  describe('Campos opcionais e normalização', () => {
+    it('persiste todos os campos opcionais ao criar (201)', async () => {
+      const res = await request(app).post('/breeds').send({
+        name: 'Shih Tzu',
+        species: 'dog',
+        size: 'small',
+        description: 'Raça originária da China.',
+        temperament: ['amigável', 'brincalhão'],
+        lifeExpectancy: 14,
+        origin: 'China',
+        hypoallergenic: true,
+      });
+
+      expect(res.status).toBe(201);
+      const d = res.body.data;
+      expect(d.description).toBe('Raça originária da China.');
+      expect(d.temperament).toEqual(['amigável', 'brincalhão']);
+      expect(d.lifeExpectancy).toBe(14);
+      expect(d.origin).toBe('China');
+      expect(d.hypoallergenic).toBe(true);
+    });
+
+    it('normaliza espaços extras no nome (201)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: '  Golden   Retriever  ', species: 'dog' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.name).toBe('Golden Retriever');
+    });
+
+    it('aceita espécie cat (201)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Siamês', species: 'cat' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.species).toBe('cat');
+    });
+
+    it('aceita espécie rabbit (201)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Holland Lop', species: 'rabbit' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('aplica size medium como default quando omitido', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Vira-lata', species: 'dog' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.size).toBe('medium');
+    });
+
+    it('inicializa deletedAt como null na criação', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Akita', species: 'dog' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.deletedAt).toBeNull();
+    });
+  });
+
+  describe('Validações de limite', () => {
+    it('rejeita nome muito longo — >50 caracteres (422)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'A'.repeat(51), species: 'dog' });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita lifeExpectancy fora do intervalo (422)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Mutante', species: 'dog', lifeExpectancy: 100 });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita size inválido (422)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Gigante', species: 'dog', size: 'giant' });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita hypoallergenic não booleano (422)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Caniche', species: 'dog', hypoallergenic: 'sim' });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita temperament como string em vez de array (422)', async () => {
+      const res = await request(app)
+        .post('/breeds')
+        .send({ name: 'Beagle', species: 'dog', temperament: 'ativo' });
+
+      expect(res.status).toBe(422);
+    });
+  });
+
+  describe('Renomeação e conflitos no PATCH', () => {
+    it('rejeita renomear para nome já existente em outra raça (409)', async () => {
+      await request(app).post('/breeds').send({ name: 'Pug', species: 'dog' });
+      const r2 = await request(app).post('/breeds').send({ name: 'Dálmata', species: 'dog' });
+      const id2 = r2.body.data._id;
+
+      const res = await request(app)
+        .patch(`/breeds/${id2}`)
+        .send({ name: 'Pug' });
+
+      expect(res.status).toBe(409);
+    });
+
+    it('permite renomear para o mesmo nome (sem conflito)', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Husky', species: 'dog' });
+      const id = r.body.data._id;
+
+      const res = await request(app)
+        .patch(`/breeds/${id}`)
+        .send({ name: 'Husky', size: 'large' });
+
+      expect(res.status).toBe(200);
+    });
+
+    it('normaliza espaços no nome durante PATCH', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Maltês', species: 'dog' });
+      const id = r.body.data._id;
+
+      const res = await request(app)
+        .patch(`/breeds/${id}`)
+        .send({ name: '  Maltês  ' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.name).toBe('Maltês');
+    });
+
+    it('atualiza temperament e origin em conjunto (200)', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Spitz', species: 'dog' });
+      const id = r.body.data._id;
+
+      const res = await request(app).patch(`/breeds/${id}`).send({
+        temperament: ['leal', 'corajoso'],
+        origin: 'Alemanha',
+        lifeExpectancy: 13,
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.temperament).toEqual(['leal', 'corajoso']);
+      expect(res.body.data.origin).toBe('Alemanha');
+      expect(res.body.data.lifeExpectancy).toBe(13);
+    });
+  });
+
+  describe('Fluxo de exclusão e reutilização de nome', () => {
+    it('permite criar nova raça com nome de uma raça já removida', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Fila', species: 'dog' });
+      const id = r.body.data._id;
+
+      await request(app).delete(`/breeds/${id}`);
+
+      const res = await request(app).post('/breeds').send({ name: 'Fila', species: 'dog' });
+      expect(res.status).toBe(201);
+    });
+
+    it('raça removida não aparece na listagem por espécie', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Setter', species: 'dog' });
+      await request(app).delete(`/breeds/${r.body.data._id}`);
+
+      await request(app).post('/breeds').send({ name: 'Bengal', species: 'cat' });
+
+      const res = await request(app).get('/breeds?species=dog');
+      expect(res.status).toBe(200);
+      expect(res.body.breeds).toHaveLength(0);
+    });
+
+    it('retorna 404 ao consultar raça removida pelo id', async () => {
+      const r = await request(app).post('/breeds').send({ name: 'Pointer', species: 'dog' });
+      const id = r.body.data._id;
+
+      await request(app).delete(`/breeds/${id}`);
+
+      const res = await request(app).get(`/breeds/${id}`);
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('Listagem com múltiplos registros', () => {
+    it('lista todas as espécies ativas sem filtro', async () => {
+      await request(app).post('/breeds').send({ name: 'Labrador', species: 'dog' });
+      await request(app).post('/breeds').send({ name: 'Persa', species: 'cat' });
+      await request(app).post('/breeds').send({ name: 'Calopsita', species: 'bird' });
+
+      const res = await request(app).get('/breeds');
+      expect(res.status).toBe(200);
+      expect(res.body.breeds).toHaveLength(3);
+    });
+
+    it('retorna apenas dog ao filtrar por species=dog com múltiplos registros', async () => {
+      await request(app).post('/breeds').send({ name: 'Rottweiler', species: 'dog' });
+      await request(app).post('/breeds').send({ name: 'Rottweiler Cat', species: 'cat' });
+      await request(app).post('/breeds').send({ name: 'Rottweiler Bird', species: 'bird' });
+
+      const res = await request(app).get('/breeds?species=dog');
+      expect(res.status).toBe(200);
+      expect(res.body.breeds).toHaveLength(1);
+      expect(res.body.breeds[0].species).toBe('dog');
+    });
+  });
 });
