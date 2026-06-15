@@ -1,5 +1,4 @@
 const Pet = require('../models/Pet')
-const { Pet: PetEntity } = require('../src/domain/entities/Pet')
 
 // helpers
 const getUserByToken = require('../helpers/get-user-by-token')
@@ -17,49 +16,64 @@ module.exports = class PetController {
     const images = req.files
     const available = true
 
+    // console.log(req.body)
+    console.log(images)
+    // return
+
+    // validations
+    if (!name) {
+      res.status(422).json({ message: 'O nome é obrigatório!' })
+      return
+    }
+
+    if (!age) {
+      res.status(422).json({ message: 'A idade é obrigatória!' })
+      return
+    }
+
+    if (!weight) {
+      res.status(422).json({ message: 'O peso é obrigatório!' })
+      return
+    }
+
+    if (!color) {
+      res.status(422).json({ message: 'A cor é obrigatória!' })
+      return
+    }
+
+    if (!images) {
+      res.status(422).json({ message: 'A imagem é obrigatória!' })
+      return
+    }
+
     // get user
     const token = getToken(req)
     const user = await getUserByToken(token)
 
-    const imageFilenames = (images || []).map((image) => image.filename)
-
-    // Validação centralizada na entidade de domínio (Single Responsibility)
-    let petEntity
-    try {
-      petEntity = new PetEntity({
-        name,
-        age,
-        weight,
-        color,
-        description,
-        available,
-        images: imageFilenames,
-        user: {
-          _id: user._id,
-          name: user.name,
-          image: user.image,
-          phone: user.phone,
-        },
-      })
-    } catch (error) {
-      res.status(422).json({ message: error.message })
-      return
-    }
-
-    // Persistência (camada External/Models)
+    // create pet
     const pet = new Pet({
-      name: petEntity.name,
-      age: petEntity.age,
-      description: petEntity.description,
-      weight: petEntity.weight,
-      color: petEntity.color,
-      available: petEntity.available,
-      images: petEntity.images,
-      user: petEntity.user,
+      name: name,
+      age: age,
+      description: description,
+      weight: weight,
+      color: color,
+      available: available,
+      images: [],
+      user: {
+        _id: user._id,
+        name: user.name,
+        image: user.image,
+        phone: user.phone,
+      },
+    })
+
+    images.map((image) => {
+      pet.images.push(image.filename)
     })
 
     try {
       const newPet = await pet.save()
+
       res.status(201).json({
         message: 'Pet cadastrado com sucesso!',
         newPet: newPet,
