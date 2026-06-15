@@ -32,10 +32,17 @@ describe('Breed — testes de integração', () => {
         store.set(_id, breed);
         return breed;
       }),
-      findActive: jest.fn(async (query = {}) =>
+      findActive: jest.fn(async (query = {}, options = {}) => {
+        const results = Array.from(store.values()).filter(
+          (b) => !b.deletedAt && (!query.species || b.species === query.species)
+        );
+        const { skip = 0, limit } = options;
+        return results.slice(skip, limit ? skip + limit : undefined);
+      }),
+      countActive: jest.fn(async (query = {}) =>
         Array.from(store.values()).filter(
           (b) => !b.deletedAt && (!query.species || b.species === query.species)
-        )
+        ).length
       ),
       findById: jest.fn(async (id) => store.get(id) || null),
       findByName: jest.fn(
