@@ -15,7 +15,7 @@ const makeDispatcher = (shouldFail = false) => ({
 const baseData = {
   type: 'message_received',
   title: 'Nova mensagem',
-  body: 'Você recebeu uma mensagem',
+  body: 'Você recebeu uma nova mensagem aqui',
   recipientId: 'u2',
 };
 
@@ -133,6 +133,66 @@ describe('createNotification', () => {
       type: 'Message',
       _id: 'msg1',
     });
+  });
+
+  it('rejeita body com menos de 10 caracteres (422)', async () => {
+    const r = await createNotification({
+      data: { ...baseData, body: 'Curto.' },
+      sender: { _id: 'u1' },
+      NotificationRepository: makeRepo(),
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+
+  it('rejeita title com menos de 3 caracteres (422)', async () => {
+    const r = await createNotification({
+      data: { ...baseData, title: 'AB' },
+      sender: { _id: 'u1' },
+      NotificationRepository: makeRepo(),
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});
+
+describe('createNotification - scheduledAt', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('persiste scheduledAt quando informado no futuro', async () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const repo = makeRepo();
+    await createNotification({
+      data: { ...baseData, scheduledAt: future },
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].scheduledAt).toBeInstanceOf(Date);
+  });
+
+  it('usa null como padrão quando scheduledAt não informado', async () => {
+    const repo = makeRepo();
+    await createNotification({
+      data: baseData,
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].scheduledAt).toBeNull();
+  });
+
+  it('rejeita scheduledAt no passado (422)', async () => {
+    const r = await createNotification({
+      data: { ...baseData, scheduledAt: '2000-01-01T00:00:00Z' },
+      sender: { _id: 'u1' },
+      NotificationRepository: makeRepo(),
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
   });
 });
 

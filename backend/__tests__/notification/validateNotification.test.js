@@ -28,6 +28,16 @@ describe('validateNotification', () => {
     expect(validateNotification({ ...valid, title: '' }).isValid).toBe(false);
   });
 
+  it('rejeita title com menos de 3 caracteres', () => {
+    const r = validateNotification({ ...valid, title: 'AB' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/3 caracteres/);
+  });
+
+  it('aceita title com exatamente 3 caracteres', () => {
+    expect(validateNotification({ ...valid, title: 'SOS' }).isValid).toBe(true);
+  });
+
   it('rejeita title muito longo', () => {
     expect(validateNotification({ ...valid, title: 'a'.repeat(201) }).isValid).toBe(false);
   });
@@ -36,8 +46,22 @@ describe('validateNotification', () => {
     expect(validateNotification({ ...valid, body: '' }).isValid).toBe(false);
   });
 
-  it('rejeita body muito longo', () => {
-    expect(validateNotification({ ...valid, body: 'a'.repeat(1001) }).isValid).toBe(false);
+  it('rejeita body com menos de 10 caracteres', () => {
+    const r = validateNotification({ ...valid, body: 'Curto.' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/10 caracteres/);
+  });
+
+  it('aceita body com exatamente 10 caracteres', () => {
+    expect(validateNotification({ ...valid, body: '1234567890' }).isValid).toBe(true);
+  });
+
+  it('rejeita body muito longo (>2000)', () => {
+    expect(validateNotification({ ...valid, body: 'a'.repeat(2001) }).isValid).toBe(false);
+  });
+
+  it('aceita body com exatamente 2000 caracteres', () => {
+    expect(validateNotification({ ...valid, body: 'a'.repeat(2000) }).isValid).toBe(true);
   });
 
   it('rejeita sem recipientId', () => {
@@ -79,6 +103,21 @@ describe('validateNotification', () => {
 
   it('rejeita expiresAt inválido', () => {
     expect(validateNotification({ ...valid, expiresAt: 'não-é-data' }).isValid).toBe(false);
+  });
+
+  it('aceita scheduledAt futuro', () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    expect(validateNotification({ ...valid, scheduledAt: future }).isValid).toBe(true);
+  });
+
+  it('rejeita scheduledAt no passado', () => {
+    const r = validateNotification({ ...valid, scheduledAt: '2000-01-01' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /scheduledAt/.test(e))).toBe(true);
+  });
+
+  it('rejeita scheduledAt inválido', () => {
+    expect(validateNotification({ ...valid, scheduledAt: 'nao-e-data' }).isValid).toBe(false);
   });
 });
 
