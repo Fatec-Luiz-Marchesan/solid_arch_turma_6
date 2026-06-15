@@ -43,6 +43,24 @@ const dietSchema = new Schema(
       maxlength: 1000,
       default: '',
     },
+    startDate: {
+      type: Date,
+      default: null,
+    },
+    endDate: {
+      type: Date,
+      default: null,
+    },
+    mealFrequency: {
+      type: Number,
+      min: 1,
+      max: 10,
+      default: null,
+    },
+    pet: {
+      type: Object,
+      default: null,
+    },
     user: {
       type: Object,
       required: true,
@@ -62,6 +80,8 @@ const dietSchema = new Schema(
 dietSchema.index({ type: 1 });
 dietSchema.index({ deletedAt: 1 });
 dietSchema.index({ name: 1 });
+dietSchema.index({ startDate: 1 });
+dietSchema.index({ 'user._id': 1, deletedAt: 1 });
 
 const Diet = mongoose.model('Diet', dietSchema);
 
