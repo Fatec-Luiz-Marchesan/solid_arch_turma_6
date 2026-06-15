@@ -100,6 +100,54 @@ describe('Diet — testes de integração', () => {
 
       expect(res.status).toBe(409);
     });
+
+    it('cria dieta com startDate, endDate, mealFrequency e pet (201)', async () => {
+      const res = await request(app)
+        .post('/diets')
+        .send({
+          name: 'Dieta Completa Nova',
+          type: 'weight-loss',
+          startDate: '2025-01-01',
+          endDate: '2025-06-01',
+          mealFrequency: 5,
+          pet: { _id: 'pet-001', name: 'Rex' },
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data).toHaveProperty('startDate');
+      expect(res.body.data).toHaveProperty('endDate');
+      expect(res.body.data.mealFrequency).toBe(5);
+      expect(res.body.data.pet._id).toBe('pet-001');
+    });
+
+    it('rejeita endDate anterior a startDate (422)', async () => {
+      const res = await request(app)
+        .post('/diets')
+        .send({
+          name: 'Dieta Inválida Datas',
+          type: 'vegan',
+          startDate: '2025-06-01',
+          endDate: '2025-01-01',
+        });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita mealFrequency igual a 0 (422)', async () => {
+      const res = await request(app)
+        .post('/diets')
+        .send({ name: 'Dieta Freq Zero', type: 'vegan', mealFrequency: 0 });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('rejeita mealFrequency igual a 15 (422)', async () => {
+      const res = await request(app)
+        .post('/diets')
+        .send({ name: 'Dieta Freq Alta', type: 'vegan', mealFrequency: 15 });
+
+      expect(res.status).toBe(422);
+    });
   });
 
   describe('GET /diets', () => {
@@ -189,6 +237,15 @@ describe('Diet — testes de integração', () => {
         .send({ dailyCalories: 1800 });
 
       expect(res.status).toBe(404);
+    });
+
+    it('atualiza mealFrequency válido (200)', async () => {
+      const res = await request(app)
+        .patch(`/diets/${dietId}`)
+        .send({ mealFrequency: 3 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.mealFrequency).toBe(3);
     });
   });
 

@@ -32,6 +32,10 @@ async function createDiet({ data, user, DietRepository }) {
       ? d.restrictions.map((r) => r.trim())
       : [],
     notes: d.notes !== undefined ? d.notes.trim() : '',
+    startDate: d.startDate ? new Date(d.startDate) : null,
+    endDate: d.endDate ? new Date(d.endDate) : null,
+    mealFrequency: typeof d.mealFrequency === 'number' ? d.mealFrequency : null,
+    pet: d.pet && d.pet._id ? { _id: d.pet._id, name: d.pet.name || null } : null,
     user: { _id: user._id, name: user.name },
     deletedAt: null,
   });
