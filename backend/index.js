@@ -31,7 +31,8 @@ app.use('/settings', SettingsRoutes)
 app.use('/user', UserAccountRoutes)
 app.use('/vaccines', VaccineRoutes)
 app.use('/breeds', BreedRoutes)
-app.use('/reports', ReportRoutes) 
+app.use('/reports', ReportRoutes)
+app.use('/diets', DietRoutes)
 
 app.listen(5000)
 
