@@ -679,6 +679,54 @@ npm run test:coverage
 
 ---
 
+---
+
+## 📁 Módulo de Upload (Task 60)
+
+Sistema avançado de gerenciamento de arquivos com rastreamento de metadata, suporte a múltiplos tipos e associação com entidades do sistema.
+
+### Tipos aceitos
+
+| Tipo | Extensões | Limite |
+|---|---|---|
+| Imagem | `.png`, `.jpg` | 5MB |
+| Documento | `.pdf` | 10MB |
+
+### Endpoints
+
+Todas exigem `Authorization: Bearer <token>`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /uploads | Envia um arquivo (form-data, campo `file`) |
+| GET | /uploads | Lista uploads do usuário (filtros: `category`, `entityType`, `entityId`, `limit`) |
+| GET | /uploads/entity/:type/:id | Lista uploads de uma entidade específica |
+| GET | /uploads/:id | Detalhe de um upload |
+| PATCH | /uploads/:id | Atualiza description ou entity |
+| DELETE | /uploads/:id | Soft delete + tentativa de remoção do disco |
+
+### Campos virtuais
+
+- **sizeInKB** — tamanho em kilobytes
+- **sizeInMB** — tamanho em megabytes
+
+### Recursos avançados
+
+- **Associação a entidades** — uploads podem ser vinculados a Pet, User, Message, etc. via `entity: { type, _id }`
+- **StorageAdapter injetável** — desacoplado do disco local, facilita migrar para S3 ou GCS no futuro
+- **Degradação graciosa no delete** — se a remoção física falhar, o soft delete já foi feito
+- **Filtros na listagem** — por categoria, entidade e limite
+- **Validação por categoria** — limites de tamanho diferentes para imagem e documento
+
+### Arquitetura
+
+Mesma estrutura dos outros módulos, com adição do StorageAdapter:
+
+Router → Controller → Use Case → Repository (Mongoose)
+                          ↓
+                    StorageAdapter (disco/S3/GCS)
+
+---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 

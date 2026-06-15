@@ -22,6 +22,7 @@ const UserAccountRoutes = require('./routers/UserAccountRouters')
 const BreedRoutes = require('./routers/BreedRouters')
 const ReportRoutes = require('./routers/ReportRouters')  
 const VaccineRoutes = require('./routers/VaccineRouters')
+const UploadRoutes = require('./routers/UploadRouters')
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
@@ -33,6 +34,8 @@ app.use('/vaccines', VaccineRoutes)
 app.use('/breeds', BreedRoutes)
 app.use('/reports', ReportRoutes)
 app.use('/diets', DietRoutes)
+app.use('/reports', ReportRoutes) 
+app.use('/uploads', UploadRoutes)
 
 app.listen(5000)
 
