@@ -11,8 +11,15 @@ const { deleteBreed } = require('../usecases/breed/deleteBreed');
 // Default repository: the only place that touches Mongoose directly.
 const defaultRepository = {
   create: (data) => new Breed(data).save(),
-  findActive: (query = {}) =>
-    Breed.find({ ...query, deletedAt: null }).sort('-createdAt'),
+  findActive: (query = {}, options = {}) => {
+    const { skip = 0, limit, sortBy = 'createdAt', sortOrder = 'desc' } = options;
+    const sortValue = sortOrder === 'asc' ? 1 : -1;
+    let q = Breed.find({ ...query, deletedAt: null }).sort({ [sortBy]: sortValue });
+    if (skip) q = q.skip(skip);
+    if (limit) q = q.limit(limit);
+    return q;
+  },
+  countActive: (query = {}) => Breed.countDocuments({ ...query, deletedAt: null }),
   findById: (id) => Breed.findById(id),
   // Case-insensitive, active-only name lookup for uniqueness checks
   findByName: (name) =>
@@ -58,15 +65,23 @@ class BreedController {
   }
 
   static async list(req, res) {
+    const { species, page, limit, sortBy, sortOrder } = req.query;
     const result = await listBreeds({
       BreedRepository,
-      filters: { species: req.query.species },
+      filters: { species },
+      pagination: { page, limit, sortBy, sortOrder },
     });
 
     if (!result.success) {
       return res.status(result.status).json({ message: result.errors[0] });
     }
-    return res.status(200).json({ breeds: result.breeds });
+    return res.status(200).json({
+      breeds: result.breeds,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    });
   }
 
   static async getById(req, res) {
