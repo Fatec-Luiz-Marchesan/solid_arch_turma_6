@@ -81,6 +81,53 @@ describe('VaccineController — testes de unidade', () => {
 
       expect(res.status).toHaveBeenCalledWith(401)
     })
+
+    it('retorna 201 com clinicName e location', async () => {
+      createVaccine.mockResolvedValueOnce({
+        success: true,
+        status: 201,
+        vaccine: { _id: 'v1', name: 'Antirrábica', clinicName: 'Clínica Pet', location: 'São Paulo' },
+      })
+      const req = {
+        body: {
+          name: 'Antirrábica',
+          petId: 'p1',
+          applicationDate: '2024-06-01',
+          clinicName: 'Clínica Pet',
+          location: 'São Paulo',
+        },
+      }
+      const res = makeRes()
+
+      await VaccineController.create(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(201)
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Vacina registrada com sucesso!' })
+      )
+    })
+
+    it('retorna 422 quando expirationDate é inválida', async () => {
+      createVaccine.mockResolvedValueOnce({
+        success: false,
+        status: 422,
+        errors: ['A data de vencimento é inválida!'],
+      })
+      const req = {
+        body: {
+          name: 'Antirrábica',
+          petId: 'p1',
+          applicationDate: '2024-06-01',
+          expirationDate: 'data-invalida',
+        },
+      }
+      const res = makeRes()
+
+      await VaccineController.create(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(422)
+      expect(res.json).toHaveBeenCalledWith({ message: 'A data de vencimento é inválida!' })
+    })
   })
 
   describe('list', () => {

@@ -3,7 +3,10 @@ const MAX_DOSE = 20
 const MAX_NOTES_LENGTH = 1000
 const MAX_NAME_LENGTH = 100
 const MAX_FIELD_LENGTH = 100
+const MAX_CLINIC_NAME_LENGTH = 150
+const MAX_LOCATION_LENGTH = 200
 const BATCH_REGEX = /^[A-Za-z0-9\-]{2,50}$/
+const SERIAL_REGEX = /^[A-Za-z0-9\-]{2,50}$/
 
 function validateVaccine(data) {
   const errors = []
@@ -72,6 +75,41 @@ function validateVaccine(data) {
     errors.push('O número do lote deve ser alfanumérico entre 2 e 50 caracteres!')
   }
 
+  if (data.clinicName !== undefined && data.clinicName !== null) {
+    if (typeof data.clinicName !== 'string') {
+      errors.push('O nome da clínica deve ser uma string!')
+    } else if (data.clinicName.length > MAX_CLINIC_NAME_LENGTH) {
+      errors.push(`O nome da clínica não pode passar de ${MAX_CLINIC_NAME_LENGTH} caracteres!`)
+    }
+  }
+
+  if (data.location !== undefined && data.location !== null) {
+    if (typeof data.location !== 'string') {
+      errors.push('A localização deve ser uma string!')
+    } else if (data.location.length > MAX_LOCATION_LENGTH) {
+      errors.push(`A localização não pode passar de ${MAX_LOCATION_LENGTH} caracteres!`)
+    }
+  }
+
+  if (data.expirationDate !== undefined && data.expirationDate !== null) {
+    const d = new Date(data.expirationDate)
+    if (isNaN(d.getTime())) {
+      errors.push('A data de vencimento é inválida!')
+    } else if (
+      data.applicationDate &&
+      !isNaN(new Date(data.applicationDate).getTime()) &&
+      d <= new Date(data.applicationDate)
+    ) {
+      errors.push('A data de vencimento deve ser posterior à data de aplicação!')
+    }
+  }
+
+  if (data.serialNumber !== undefined && data.serialNumber !== null) {
+    if (!SERIAL_REGEX.test(data.serialNumber)) {
+      errors.push('O número de série deve ser alfanumérico entre 2 e 50 caracteres!')
+    }
+  }
+
   return { isValid: errors.length === 0, errors }
 }
 
@@ -130,6 +168,41 @@ function validateVaccineUpdate(data) {
     errors.push('O número do lote deve ser alfanumérico entre 2 e 50 caracteres!')
   }
 
+  if (data.clinicName !== undefined && data.clinicName !== null) {
+    if (typeof data.clinicName !== 'string') {
+      errors.push('O nome da clínica deve ser uma string!')
+    } else if (data.clinicName.length > MAX_CLINIC_NAME_LENGTH) {
+      errors.push(`O nome da clínica não pode passar de ${MAX_CLINIC_NAME_LENGTH} caracteres!`)
+    }
+  }
+
+  if (data.location !== undefined && data.location !== null) {
+    if (typeof data.location !== 'string') {
+      errors.push('A localização deve ser uma string!')
+    } else if (data.location.length > MAX_LOCATION_LENGTH) {
+      errors.push(`A localização não pode passar de ${MAX_LOCATION_LENGTH} caracteres!`)
+    }
+  }
+
+  if (data.expirationDate !== undefined && data.expirationDate !== null) {
+    const d = new Date(data.expirationDate)
+    if (isNaN(d.getTime())) {
+      errors.push('A data de vencimento é inválida!')
+    } else if (
+      data.applicationDate &&
+      !isNaN(new Date(data.applicationDate).getTime()) &&
+      d <= new Date(data.applicationDate)
+    ) {
+      errors.push('A data de vencimento deve ser posterior à data de aplicação!')
+    }
+  }
+
+  if (data.serialNumber !== undefined && data.serialNumber !== null) {
+    if (!SERIAL_REGEX.test(data.serialNumber)) {
+      errors.push('O número de série deve ser alfanumérico entre 2 e 50 caracteres!')
+    }
+  }
+
   return { isValid: errors.length === 0, errors }
 }
 
@@ -139,4 +212,6 @@ module.exports = {
   ALLOWED_STATUS,
   MAX_DOSE,
   MAX_NOTES_LENGTH,
+  MAX_CLINIC_NAME_LENGTH,
+  MAX_LOCATION_LENGTH,
 }

@@ -20,6 +20,10 @@ async function createVaccine({ data, user, VaccineRepository }) {
     status: data.status || 'applied',
     veterinarian: data.veterinarian ? data.veterinarian.trim() : null,
     notes: data.notes ? data.notes.trim() : null,
+    clinicName: data.clinicName ? data.clinicName.trim() : null,
+    location: data.location ? data.location.trim() : null,
+    expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
+    serialNumber: data.serialNumber ? data.serialNumber.trim() : null,
     pet: { _id: data.petId, name: data.petName || null },
     user: { _id: user._id, name: user.name },
   })

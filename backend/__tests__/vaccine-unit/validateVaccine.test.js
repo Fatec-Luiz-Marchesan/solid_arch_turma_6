@@ -1,5 +1,10 @@
 const { describe, it, expect } = require('@jest/globals')
-const { validateVaccine, validateVaccineUpdate } = require('../../helpers/validate-vaccine')
+const {
+  validateVaccine,
+  validateVaccineUpdate,
+  MAX_CLINIC_NAME_LENGTH,
+  MAX_LOCATION_LENGTH,
+} = require('../../helpers/validate-vaccine')
 
 const validBase = {
   name: 'Antirrábica',
@@ -178,6 +183,78 @@ describe('validateVaccine', () => {
       expect(r.errors[0]).toMatch(/veterinário/)
     })
   })
+
+  describe('clinicName', () => {
+    it('aceita clinicName válido', () => {
+      const r = validateVaccine({ ...validBase, clinicName: 'Clínica Pet Feliz' })
+      expect(r.isValid).toBe(true)
+    })
+
+    it('rejeita clinicName com mais de 150 caracteres', () => {
+      const r = validateVaccine({ ...validBase, clinicName: 'A'.repeat(MAX_CLINIC_NAME_LENGTH + 1) })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/clínica/)
+    })
+  })
+
+  describe('location', () => {
+    it('aceita location válida', () => {
+      const r = validateVaccine({ ...validBase, location: 'São Paulo, SP' })
+      expect(r.isValid).toBe(true)
+    })
+
+    it('rejeita location com mais de 200 caracteres', () => {
+      const r = validateVaccine({ ...validBase, location: 'B'.repeat(MAX_LOCATION_LENGTH + 1) })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/localização/)
+    })
+  })
+
+  describe('expirationDate', () => {
+    it('rejeita expirationDate anterior à applicationDate', () => {
+      const r = validateVaccine({
+        ...validBase,
+        applicationDate: '2024-06-01',
+        expirationDate: '2024-05-01',
+      })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/vencimento/)
+    })
+
+    it('aceita expirationDate posterior à applicationDate', () => {
+      const r = validateVaccine({
+        ...validBase,
+        applicationDate: '2024-06-01',
+        expirationDate: '2025-06-01',
+      })
+      expect(r.isValid).toBe(true)
+    })
+
+    it('rejeita expirationDate inválida', () => {
+      const r = validateVaccine({ ...validBase, expirationDate: 'nao-e-uma-data' })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/vencimento/)
+    })
+  })
+
+  describe('serialNumber', () => {
+    it('aceita serialNumber válido', () => {
+      const r = validateVaccine({ ...validBase, serialNumber: 'SN-12345' })
+      expect(r.isValid).toBe(true)
+    })
+
+    it('rejeita serialNumber com formato inválido', () => {
+      const r = validateVaccine({ ...validBase, serialNumber: '@@@@' })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/série/)
+    })
+
+    it('rejeita serialNumber com menos de 2 caracteres', () => {
+      const r = validateVaccine({ ...validBase, serialNumber: 'A' })
+      expect(r.isValid).toBe(false)
+      expect(r.errors[0]).toMatch(/série/)
+    })
+  })
 })
 
 describe('validateVaccineUpdate', () => {
@@ -274,5 +351,44 @@ describe('validateVaccineUpdate', () => {
       const r = validateVaccineUpdate({ status: s })
       expect(r.isValid).toBe(true)
     }
+  })
+
+  it('aceita clinicName válido em update', () => {
+    const r = validateVaccineUpdate({ clinicName: 'Clínica Vet' })
+    expect(r.isValid).toBe(true)
+  })
+
+  it('rejeita clinicName com mais de 150 caracteres em update', () => {
+    const r = validateVaccineUpdate({ clinicName: 'A'.repeat(MAX_CLINIC_NAME_LENGTH + 1) })
+    expect(r.isValid).toBe(false)
+    expect(r.errors[0]).toMatch(/clínica/)
+  })
+
+  it('aceita location válida em update', () => {
+    const r = validateVaccineUpdate({ location: 'Rio de Janeiro, RJ' })
+    expect(r.isValid).toBe(true)
+  })
+
+  it('rejeita location com mais de 200 caracteres em update', () => {
+    const r = validateVaccineUpdate({ location: 'B'.repeat(MAX_LOCATION_LENGTH + 1) })
+    expect(r.isValid).toBe(false)
+    expect(r.errors[0]).toMatch(/localização/)
+  })
+
+  it('rejeita expirationDate inválida em update', () => {
+    const r = validateVaccineUpdate({ expirationDate: 'invalido' })
+    expect(r.isValid).toBe(false)
+    expect(r.errors[0]).toMatch(/vencimento/)
+  })
+
+  it('aceita serialNumber válido em update', () => {
+    const r = validateVaccineUpdate({ serialNumber: 'SN-99999' })
+    expect(r.isValid).toBe(true)
+  })
+
+  it('rejeita serialNumber com formato inválido em update', () => {
+    const r = validateVaccineUpdate({ serialNumber: '!' })
+    expect(r.isValid).toBe(false)
+    expect(r.errors[0]).toMatch(/série/)
   })
 })

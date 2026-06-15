@@ -34,6 +34,10 @@ async function updateVaccine({ id, data, user, VaccineRepository }) {
     'status',
     'veterinarian',
     'notes',
+    'clinicName',
+    'location',
+    'expirationDate',
+    'serialNumber',
   ]
 
   const updates = {}
