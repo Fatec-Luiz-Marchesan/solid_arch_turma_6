@@ -561,6 +561,124 @@ variável de ambiente (MONGO_URL), permanecendo na camada de infraestrutura.
 Entidades e Use Cases ficaram intactos.
 
 ---
+
+## 💉 Módulo de Vacinas (Task 32)
+
+Implementação completa do fluxo de vacinas de pets, permitindo registrar, consultar, atualizar e remover vacinas aplicadas ou agendadas para cada animal.
+
+### Funcionalidades
+
+- Registro de vacina vinculada a um pet e ao usuário autenticado
+- Listagem de vacinas por usuário ou por pet
+- Consulta individual por ID
+- Atualização parcial (nome, dose, datas, status, etc.)
+- Remoção lógica (soft delete via `deletedAt`)
+
+### Autenticação
+
+Todas as rotas exigem o header `Authorization: Bearer <token>`.
+
+### Endpoints disponíveis
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /vaccines | Registra uma nova vacina |
+| GET | /vaccines | Lista vacinas do usuário logado |
+| GET | /vaccines/:id | Retorna os detalhes de uma vacina específica |
+| PATCH | /vaccines/:id | Atualiza parcialmente uma vacina |
+| DELETE | /vaccines/:id | Remove uma vacina (soft delete) |
+
+### Exemplo de requisição
+
+POST /vaccines
+
+```json
+{
+  "name": "V10",
+  "manufacturer": "Zoetis",
+  "batchNumber": "LOT-2024-001",
+  "applicationDate": "2024-06-01",
+  "nextDueDate": "2025-06-01",
+  "dose": 1,
+  "status": "applied",
+  "veterinarian": "Dr. João Silva",
+  "notes": "Aplicada sem intercorrências.",
+  "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
+}
+```
+
+### Status possíveis
+
+- `applied` — Vacina já aplicada (padrão)
+- `scheduled` — Vacina agendada
+- `overdue` — Vacina em atraso
+
+### Regras de validação
+
+- O nome é obrigatório e tem limite de 100 caracteres
+- O pet (`petId`) é obrigatório
+- A data de aplicação é obrigatória e deve ser uma data válida
+- A próxima dose (`nextDueDate`), quando informada, deve ser posterior à data de aplicação
+- A dose deve ser um inteiro entre 1 e 20
+- O status deve ser um dos três valores permitidos (`applied`, `scheduled`, `overdue`)
+- Observações limitadas a 1000 caracteres; fabricante e veterinário a 100 cada
+
+### Organização por camadas
+
+A funcionalidade segue os princípios da Clean Architecture:
+
+- **Routers** (`routers/VaccineRouters.js`) — define as rotas HTTP com rate limiting (100 req / 15 min)
+- **Controllers** (`controllers/VaccineController.js`) — recebe a requisição HTTP e delega para o use case correspondente; expõe `setRepository`/`resetRepository` para injeção em testes
+- **Use Cases** (`usecases/vaccine/`) — concentra toda a regra de negócio:
+  - `createVaccine.js` — valida e persiste
+  - `listVaccines.js` — lista por usuário ou por pet
+  - `getVaccineById.js` — consulta individual com verificação de posse
+  - `updateVaccine.js` — atualização parcial com re-validação
+  - `deleteVaccine.js` — soft delete verificando posse
+- **Helpers** (`helpers/validate-vaccine.js`) — funções puras de validação, sem dependência de framework
+- **Model** (`models/Vaccine.js`) — schema Mongoose com índices em `pet._id`, `user._id`, `applicationDate` e `nextDueDate`
+
+O repositório de dados é injetado via parâmetro nos use cases (Dependency Inversion Principle), permitindo testes 100% unitários sem banco de dados.
+
+### Estrutura de arquivos
+
+```
+backend/
+├── routers/VaccineRouters.js
+├── controllers/VaccineController.js
+├── usecases/vaccine/
+│   ├── createVaccine.js
+│   ├── listVaccines.js
+│   ├── getVaccineById.js
+│   ├── updateVaccine.js
+│   └── deleteVaccine.js
+├── helpers/validate-vaccine.js
+└── models/Vaccine.js
+```
+
+### Testes
+
+Os testes ficam em `backend/__tests__/vaccine-unit/` e cobrem todos os use cases, o controller e o helper de validação, incluindo cenários de sucesso, falha de validação, falta de autenticação e tentativa de acesso a vacinas de outro usuário.
+
+| Arquivo de teste | O que cobre |
+|---|---|
+| `createVaccine.test.js` | Criação com sucesso e todas as validações |
+| `listVaccines.test.js` | Listagem por usuário e por pet |
+| `getVaccineById.test.js` | Consulta por ID e verificação de posse |
+| `updateVaccine.test.js` | Atualização parcial e regras de validação |
+| `deleteVaccine.test.js` | Soft delete e verificação de posse |
+| `vaccineController.test.js` | Camada HTTP (controller) com mocks de use cases |
+| `validateVaccine.test.js` | Todas as regras do helper de validação |
+
+Para rodar os testes com relatório de cobertura:
+
+```bash
+cd backend
+npm run test:coverage
+```
+
+---
+
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
