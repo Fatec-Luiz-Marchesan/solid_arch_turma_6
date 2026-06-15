@@ -20,6 +20,7 @@ const PaymentRoutes = require('./routers/PaymentRouters')
 const SettingsRoutes = require('./routers/SettingsRouters')
 const UserAccountRoutes = require('./routers/UserAccountRouters')
 const BreedRoutes = require('./routers/BreedRouters')
+const ReportRoutes = require('./routers/ReportRouters')  
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
@@ -28,6 +29,7 @@ app.use('/payments', PaymentRoutes)
 app.use('/settings', SettingsRoutes)
 app.use('/user', UserAccountRoutes)
 app.use('/breeds', BreedRoutes)
+app.use('/reports', ReportRoutes) 
 
 app.listen(5000)
 

@@ -1,6 +1,6 @@
 const express = require('express');
 
-function buildTestApp({ paymentRepository, breedRepository, currentUser } = {}) {
+function buildTestApp({ paymentRepository, breedRepository, reportRepository, currentUser } = {}) {
   const app = express();
   app.use(express.json());
 
@@ -37,6 +37,20 @@ function buildTestApp({ paymentRepository, breedRepository, currentUser } = {}) 
     router.delete('/:id', BreedController.delete);
 
     app.use('/breeds', router);
+  }
+
+  if (reportRepository) {
+    const ReportController = require('../../controllers/ReportController');
+    ReportController.setRepository(reportRepository);
+
+    const router = express.Router();
+    router.post('/', ReportController.create);
+    router.get('/', ReportController.list);
+    router.get('/:id', ReportController.getById);
+    router.patch('/:id/status', ReportController.updateStatus);
+    router.delete('/:id', ReportController.delete);
+
+    app.use('/reports', router);
   }
 
   return app;
