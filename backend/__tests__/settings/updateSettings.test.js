@@ -41,10 +41,57 @@ describe('updateSettings use case', () => {
   it('faz merge parcial de notifications com as atuais', async () => {
     const repo = makeRepo();
     await updateSettings({ data: { notifications: { sms: true } }, user: { _id: 'u1' }, SettingsRepository: repo });
-    expect(repo.updateByUser.mock.calls[0][1].notifications).toEqual({
-      email: true,
-      push: true,
-      sms: true,
+    const n = repo.updateByUser.mock.calls[0][1].notifications;
+    expect(n.email).toBe(true);
+    expect(n.push).toBe(true);
+    expect(n.sms).toBe(true);
+  });
+
+  it('atualiza dateFormat (200)', async () => {
+    const repo = makeRepo();
+    await updateSettings({
+      data: { dateFormat: 'YYYY-MM-DD' },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
     });
+    expect(repo.updateByUser.mock.calls[0][1].dateFormat).toBe('YYYY-MM-DD');
+  });
+
+  it('rejeita dateFormat inválido (422)', async () => {
+    const r = await updateSettings({
+      data: { dateFormat: 'DD-MM-YY' },
+      user: { _id: 'u1' },
+      SettingsRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+  });
+
+  it('atualiza timeFormat (200)', async () => {
+    const repo = makeRepo();
+    await updateSettings({
+      data: { timeFormat: '12h' },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
+    });
+    expect(repo.updateByUser.mock.calls[0][1].timeFormat).toBe('12h');
+  });
+
+  it('atualiza accessibility com merge parcial', async () => {
+    const repo = makeRepo();
+    await updateSettings({
+      data: { accessibility: { highContrast: true } },
+      user: { _id: 'u1' },
+      SettingsRepository: repo,
+    });
+    expect(repo.updateByUser.mock.calls[0][1].accessibility.highContrast).toBe(true);
+  });
+
+  it('rejeita accessibility.fontSize inválido (422)', async () => {
+    const r = await updateSettings({
+      data: { accessibility: { fontSize: 'xxlarge' } },
+      user: { _id: 'u1' },
+      SettingsRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
   });
 });
