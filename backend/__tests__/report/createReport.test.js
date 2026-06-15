@@ -25,8 +25,31 @@ describe('createReport use case', () => {
     const payload = repo.create.mock.calls[0][0];
     expect(payload.reporter).toEqual({ _id: 'u1', name: 'João' });
     expect(payload.status).toBe('pending');
+    expect(payload.severity).toBe('low');
     expect(payload.description).toBe('');
+    expect(payload.moderatorNote).toBe('');
     expect(payload.deletedAt).toBeNull();
+  });
+
+  it('aceita severity customizada', async () => {
+    const repo = makeRepo();
+    await createReport({
+      data: { ...validData, severity: 'high' },
+      user: { _id: 'u1' },
+      ReportRepository: repo,
+    });
+    const payload = repo.create.mock.calls[0][0];
+    expect(payload.severity).toBe('high');
+  });
+
+  it('falha com severity inválida (422)', async () => {
+    const r = await createReport({
+      data: { ...validData, severity: 'critical' },
+      user: { _id: 'u1' },
+      ReportRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+    expect(r.success).toBe(false);
   });
 
   it('normaliza targetId e description', async () => {

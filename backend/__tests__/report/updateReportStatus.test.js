@@ -25,6 +25,32 @@ describe('updateReportStatus use case', () => {
     expect(repo.update).toHaveBeenCalledWith('r1', { status: 'resolved' });
   });
 
+  it('atualiza status com moderatorNote (200)', async () => {
+    const repo = makeRepo(existing);
+    const r = await updateReportStatus({
+      id: 'r1',
+      data: { status: 'dismissed', moderatorNote: '  Sem violação identificada.  ' },
+      user,
+      ReportRepository: repo,
+    });
+    expect(r.success).toBe(true);
+    expect(repo.update).toHaveBeenCalledWith('r1', {
+      status: 'dismissed',
+      moderatorNote: 'Sem violação identificada.',
+    });
+  });
+
+  it('rejeita moderatorNote inválida (422)', async () => {
+    const r = await updateReportStatus({
+      id: 'r1',
+      data: { status: 'resolved', moderatorNote: 'x'.repeat(501) },
+      user,
+      ReportRepository: makeRepo(existing),
+    });
+    expect(r.status).toBe(422);
+    expect(r.success).toBe(false);
+  });
+
   it('falha sem usuário autenticado (401)', async () => {
     const r = await updateReportStatus({
       id: 'r1',

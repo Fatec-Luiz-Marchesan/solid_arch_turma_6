@@ -221,21 +221,72 @@ describe('Report — testes de integração', () => {
     });
   });
 
+  describe('severity', () => {
+    it('cria denúncia com severity high (201)', async () => {
+      const res = await request(app)
+        .post('/reports')
+        .send({ ...validBody, severity: 'high' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.severity).toBe('high');
+    });
+
+    it('cria denúncia com severity padrão low quando omitida', async () => {
+      const res = await request(app).post('/reports').send(validBody);
+      expect(res.status).toBe(201);
+      expect(res.body.data.severity).toBe('low');
+    });
+
+    it('rejeita severity inválida (422)', async () => {
+      const res = await request(app)
+        .post('/reports')
+        .send({ ...validBody, severity: 'critical' });
+      expect(res.status).toBe(422);
+    });
+  });
+
+  describe('moderatorNote no PATCH /reports/:id/status', () => {
+    let reportId;
+
+    beforeEach(async () => {
+      const r = await request(app).post('/reports').send(validBody);
+      reportId = r.body.data._id;
+    });
+
+    it('atualiza status com moderatorNote (200)', async () => {
+      const res = await request(app)
+        .patch(`/reports/${reportId}/status`)
+        .send({ status: 'dismissed', moderatorNote: 'Sem evidência de fraude.' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.moderatorNote).toBe('Sem evidência de fraude.');
+    });
+
+    it('rejeita moderatorNote muito longa (422)', async () => {
+      const res = await request(app)
+        .patch(`/reports/${reportId}/status`)
+        .send({ status: 'resolved', moderatorNote: 'x'.repeat(501) });
+      expect(res.status).toBe(422);
+    });
+  });
+
   describe('Fluxo completo: criar → consultar → moderar → remover', () => {
     it('passa por todas as etapas com sucesso', async () => {
       const created = await request(app)
         .post('/reports')
-        .send({ ...validBody, description: 'Anúncio falso.' });
+        .send({ ...validBody, description: 'Anúncio falso.', severity: 'medium' });
       expect(created.status).toBe(201);
       const id = created.body.data._id;
 
       const detail = await request(app).get(`/reports/${id}`);
       expect(detail.body.report.description).toBe('Anúncio falso.');
+      expect(detail.body.report.severity).toBe('medium');
 
       const moderated = await request(app)
         .patch(`/reports/${id}/status`)
-        .send({ status: 'resolved' });
+        .send({ status: 'resolved', moderatorNote: 'Violação confirmada.' });
       expect(moderated.body.data.status).toBe('resolved');
+      expect(moderated.body.data.moderatorNote).toBe('Violação confirmada.');
 
       const removed = await request(app).delete(`/reports/${id}`);
       expect(removed.status).toBe(200);
