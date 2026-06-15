@@ -117,8 +117,24 @@ function validateDiet(data, { partial = false } = {}) {
   return { isValid: errors.length === 0, errors };
 }
 
+function validatePagination(page, limit) {
+  const errors = [];
+  const p = Number(page);
+  const l = Number(limit);
+
+  if (!Number.isInteger(p) || p < 1) {
+    errors.push('page deve ser um inteiro positivo!');
+  }
+  if (!Number.isInteger(l) || l < 1) {
+    errors.push('limit deve ser um inteiro positivo!');
+  }
+
+  return { isValid: errors.length === 0, errors };
+}
+
 module.exports = {
   validateDiet,
+  validatePagination,
   normalizeName,
   ALLOWED_TYPES,
   NAME_MIN,

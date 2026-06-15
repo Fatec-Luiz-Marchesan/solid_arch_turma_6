@@ -7,11 +7,19 @@ async function listDiets({ DietRepository, filters = {} }) {
     return { success: false, status: 422, errors: ['Tipo de dieta inválido!'] };
   }
 
-  const diets = await DietRepository.findActive(
-    f.type ? { type: f.type } : {}
-  );
+  const query = f.type ? { type: f.type } : {};
+  if (f.userId) {
+    query.userId = f.userId;
+  }
 
-  return { success: true, status: 200, diets };
+  const page = f.page || 1;
+  const limit = f.limit || 10;
+
+  const diets = await DietRepository.findActive(query, { page, limit });
+
+  const total = Array.isArray(diets) ? diets.length : 0;
+
+  return { success: true, status: 200, diets, total, page, limit };
 }
 
 module.exports = { listDiets };
