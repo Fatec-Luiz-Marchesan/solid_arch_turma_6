@@ -15,7 +15,7 @@ async function listDiets({ DietRepository, filters = {} }) {
   const page = f.page || 1;
   const limit = f.limit || 10;
 
-  const diets = await DietRepository.findActive(query, { page, limit });
+  const diets = await DietRepository.findActive(query);
 
   const total = Array.isArray(diets) ? diets.length : 0;
 
