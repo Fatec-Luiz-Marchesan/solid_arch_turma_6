@@ -54,6 +54,19 @@ function validateNotification(data) {
       errors.push('Canais inválidos!');
     }
   }
+if (
+    data.actionUrl !== undefined &&
+    data.actionUrl !== null &&
+    data.actionUrl !== ''
+  ) {
+    if (typeof data.actionUrl !== 'string') {
+      errors.push('actionUrl deve ser um texto!');
+    } else if (data.actionUrl.length > 500) {
+      errors.push('actionUrl não pode passar de 500 caracteres!');
+    } else if (!/^(https?:\/\/|\/)[^\s]*$/.test(data.actionUrl.trim())) {
+      errors.push('actionUrl deve ser uma URL http(s) ou caminho relativo!');
+    }
+  }
 
   if (data.expiresAt) {
     const exp = new Date(data.expiresAt);

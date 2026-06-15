@@ -125,3 +125,40 @@ describe('validateListFilters', () => {
     expect(validateListFilters({ fromDate: 'lixo' }).isValid).toBe(false);
   });
 });
+
+describe('validateNotification - actionUrl', () => {
+  const valid = {
+    type: 'message_received',
+    title: 'Nova mensagem',
+    body: 'Você recebeu uma mensagem nova',
+    recipientId: 'u1',
+  };
+
+  it('aceita ausência de actionUrl', () => {
+    expect(validateNotification(valid).isValid).toBe(true);
+  });
+
+  it('aceita URL http(s) válida', () => {
+    const r = validateNotification({ ...valid, actionUrl: 'https://app.com/pets/1' });
+    expect(r.isValid).toBe(true);
+  });
+
+  it('aceita caminho relativo', () => {
+    expect(validateNotification({ ...valid, actionUrl: '/messages/abc' }).isValid).toBe(true);
+  });
+
+  it('rejeita esquema não permitido (ex.: javascript:)', () => {
+    const r = validateNotification({ ...valid, actionUrl: 'javascript:alert(1)' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /actionUrl/.test(e))).toBe(true);
+  });
+
+  it('rejeita actionUrl não-texto', () => {
+    expect(validateNotification({ ...valid, actionUrl: 123 }).isValid).toBe(false);
+  });
+
+  it('rejeita actionUrl muito longo', () => {
+    const longUrl = '/' + 'a'.repeat(500);
+    expect(validateNotification({ ...valid, actionUrl: longUrl }).isValid).toBe(false);
+  });
+});
