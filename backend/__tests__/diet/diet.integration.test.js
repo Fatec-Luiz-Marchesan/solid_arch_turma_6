@@ -31,7 +31,7 @@ describe('Diet — testes de integração', () => {
         store.set(_id, diet);
         return diet;
       }),
-      findActive: jest.fn(async (query = {}) =>
+      findActive: jest.fn(async (query = {}, pagination = {}) =>
         Array.from(store.values()).filter(
           (d) => !d.deletedAt && (!query.type || d.type === query.type)
         )
@@ -180,6 +180,23 @@ describe('Diet — testes de integração', () => {
 
     it('rejeita filtro de tipo inválido (422)', async () => {
       const res = await request(app).get('/diets?type=invalido');
+      expect(res.status).toBe(422);
+    });
+
+    it('retorna metadados de paginação com ?page=1&limit=5 (200)', async () => {
+      await request(app).post('/diets').send({ name: 'Low Carb', type: 'low-carb' });
+      await request(app).post('/diets').send({ name: 'Dieta Vegana', type: 'vegan' });
+
+      const res = await request(app).get('/diets?page=1&limit=5');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.diets)).toBe(true);
+      expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('page', 1);
+      expect(res.body).toHaveProperty('limit', 5);
+    });
+
+    it('rejeita paginação inválida ?page=0&limit=abc (422)', async () => {
+      const res = await request(app).get('/diets?page=0&limit=abc');
       expect(res.status).toBe(422);
     });
   });
