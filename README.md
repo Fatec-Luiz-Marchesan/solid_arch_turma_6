@@ -727,6 +727,54 @@ Router → Controller → Use Case → Repository (Mongoose)
                     StorageAdapter (disco/S3/GCS)
 
 ---
+---
+
+## Endpoints de Location
+
+| Método | Rota                       | Ação                                |
+|--------|----------------------------|-------------------------------------|
+| POST   | /locations                 | Cria uma localização                |
+| GET    | /locations                 | Lista localizações do usuário       |
+| GET    | /locations/:id             | Busca uma localização por id        |
+| PATCH  | /locations/:id             | Atualiza uma localização            |
+| PATCH  | /locations/:id/primary     | Define como localização principal   |
+| DELETE | /locations/:id             | Remove uma localização              |
+
+Todas exigem JWT em `Authorization: Bearer <token>`.
+
+Validações: `state` em 2 letras maiúsculas (ex: SP), `zipCode` formato
+brasileiro (`12345-678` ou `12345678`), `latitude` entre -90 e 90,
+`longitude` entre -180 e 180.
+
+---
+---
+
+## Endpoints de Admin
+
+| Método | Rota                          | Quem pode                      |
+|--------|-------------------------------|--------------------------------|
+| POST   | /admin/bootstrap              | Usuário logado (1ª vez apenas) |
+| GET    | /admin/users                  | Admin                          |
+| GET    | /admin/users/:id              | Admin                          |
+| PATCH  | /admin/users/:id/promote      | Admin                          |
+| PATCH  | /admin/users/:id/demote       | Admin                          |
+| DELETE | /admin/users/:id              | Admin                          |
+| GET    | /admin/stats                  | Admin                          |
+
+### Como criar o primeiro admin
+
+Por design, `POST /admin/bootstrap` só funciona enquanto não existir nenhum
+admin no sistema. O primeiro usuário que chamar essa rota com um JWT válido
+vira admin. Depois disso, a rota retorna 403, e novos admins só podem ser
+criados via `PATCH /admin/users/:id/promote` por outro admin.
+
+### Proteções implementadas
+
+- Não é possível rebaixar ou deletar o último admin do sistema.
+- Um admin não pode deletar a própria conta.
+- O middleware `check-admin` valida JWT e papel a cada requisição.
+
+---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
