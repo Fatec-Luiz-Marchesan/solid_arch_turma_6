@@ -231,4 +231,42 @@ describe('createNotification - actionUrl', () => {
     expect(r.success).toBe(false);
     expect(r.status).toBe(422);
   });
+ describe('createNotification - scheduledAt', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('persiste scheduledAt como Date quando informado', async () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const repo = makeRepo();
+    await createNotification({
+      data: { ...baseData, scheduledAt: future },
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].scheduledAt).toBeInstanceOf(Date);
+  });
+
+  it('usa scheduledAt null por padrão', async () => {
+    const repo = makeRepo();
+    await createNotification({
+      data: baseData,
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].scheduledAt).toBeNull();
+  });
+
+  it('rejeita scheduledAt no passado (422)', async () => {
+    const past = new Date(Date.now() - 86400000).toISOString();
+    const r = await createNotification({
+      data: { ...baseData, scheduledAt: past },
+      sender: { _id: 'u1' },
+      NotificationRepository: makeRepo(),
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});
 });

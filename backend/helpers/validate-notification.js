@@ -54,7 +54,8 @@ function validateNotification(data) {
       errors.push('Canais inválidos!');
     }
   }
-if (
+
+  if (
     data.actionUrl !== undefined &&
     data.actionUrl !== null &&
     data.actionUrl !== ''

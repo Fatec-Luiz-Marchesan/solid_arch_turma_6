@@ -19,6 +19,7 @@ async function createNotification({ data, sender, NotificationRepository, Notifi
     actionUrl: data.actionUrl ? data.actionUrl.trim() : null,
     scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+    scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
     status: 'unread',
   });
 
