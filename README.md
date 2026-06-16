@@ -382,6 +382,162 @@ Todas exigem `Authorization: Bearer <token>`.
 Mesma da Message e Payment, com camada extra de `Dispatcher`:
 
 ---
+
+---
+
+## 🥗 Módulo de Dietas (Task 35)
+
+Implementação completa do fluxo de dietas para pets. Permite cadastrar, consultar, atualizar e remover planos alimentares, com validação rigorosa, soft delete e proteção por autenticação.
+
+### Funcionalidades
+
+- Criação de uma dieta com nome, tipo, objetivo, calorias diárias, duração e restrições alimentares
+- Listagem de todas as dietas ativas, com filtro opcional por tipo via query string
+- Consulta de uma dieta específica por ID
+- Atualização parcial (PATCH) — apenas os campos enviados são alterados
+- Remoção lógica (soft delete): a dieta some da listagem mas permanece no banco para auditoria
+
+### Tipos de dieta aceitos
+
+`weight-loss` · `weight-gain` · `maintenance` · `high-protein` · `low-carb` · `vegan` · `other`
+
+### Autenticação
+
+- Leitura (`GET /diets` e `GET /diets/:id`) — pública, sem token
+- Escrita (`POST`, `PATCH`, `DELETE`) — exige `Authorization: Bearer <token>`
+
+### Endpoints
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| POST | /diets | sim | Cria uma nova dieta |
+| GET | /diets | não | Lista dietas ativas (suporta `?type=<tipo>`) |
+| GET | /diets/:id | não | Detalhe de uma dieta |
+| PATCH | /diets/:id | sim | Atualiza campos da dieta |
+| DELETE | /diets/:id | sim | Soft delete da dieta |
+
+### Exemplos de requisição
+
+**POST /diets** — cria uma dieta:
+
+```json
+{
+  "name": "Low Carb Avançada",
+  "type": "low-carb",
+  "goal": "Perder 5kg em 3 meses",
+  "dailyCalories": 1800,
+  "durationDays": 90,
+  "restrictions": ["glúten", "lactose"],
+  "notes": "Evitar carboidratos simples após as 18h."
+}
+```
+
+Resposta `201`:
+
+```json
+{
+  "message": "Dieta criada!",
+  "data": {
+    "_id": "664abc123...",
+    "name": "Low Carb Avançada",
+    "type": "low-carb",
+    "goal": "Perder 5kg em 3 meses",
+    "dailyCalories": 1800,
+    "durationDays": 90,
+    "restrictions": ["glúten", "lactose"],
+    "notes": "Evitar carboidratos simples após as 18h.",
+    "deletedAt": null,
+    "createdAt": "2026-06-15T10:00:00.000Z"
+  }
+}
+```
+
+**GET /diets?type=vegan** — filtra por tipo:
+
+```json
+{
+  "diets": [
+    { "_id": "664def456...", "name": "Dieta Vegana", "type": "vegan" }
+  ]
+}
+```
+
+**PATCH /diets/:id** — atualização parcial:
+
+```json
+{ "dailyCalories": 2200, "notes": "Sem açúcar refinado." }
+```
+
+Resposta `200`:
+
+```json
+{
+  "message": "Dieta atualizada!",
+  "data": { "dailyCalories": 2200, "notes": "Sem açúcar refinado.", ... }
+}
+```
+
+### Regras de validação
+
+| Campo | Regra |
+|---|---|
+| `name` | obrigatório, 2–100 caracteres, único (case-insensitive) |
+| `type` | obrigatório, deve ser um dos 7 tipos aceitos |
+| `goal` | opcional, máx. 300 caracteres |
+| `dailyCalories` | opcional, número entre 0 e 10 000 |
+| `durationDays` | opcional, inteiro entre 1 e 3 650 |
+| `restrictions` | opcional, lista de até 20 itens, cada item até 50 caracteres |
+| `notes` | opcional, máx. 1 000 caracteres |
+
+### Regras de negócio
+
+| Cenário | Resposta |
+|---|---|
+| Tipo fora da lista | 422 — tipo inválido |
+| Nome duplicado (case-insensitive) | 409 — já existe |
+| Dieta não encontrada | 404 — não encontrada |
+| Usuário não autenticado | 401 — não autenticado |
+| Filtro com tipo inválido na listagem | 422 — tipo inválido |
+
+### Organização por camadas (Clean Architecture)
+
+```
+backend/
+├── routers/DietRouters.js          → rotas HTTP + rate limiting (100 req/15min)
+├── controllers/DietController.js   → ponte HTTP ↔ use case + injeção de repositório
+├── usecases/diet/
+│   ├── createDiet.js               → valida, checa duplicidade, persiste
+│   ├── listDiets.js                → filtra por tipo, retorna apenas não-deletadas
+│   ├── getDietById.js              → busca por ID, 404 se deletada
+│   ├── updateDiet.js               → validação parcial (PATCH), checa conflito de nome
+│   └── deleteDiet.js               → soft delete (seta deletedAt)
+├── helpers/validate-diet.js        → validações puras e reutilizáveis
+└── models/Diet.js                  → schema Mongoose com índices em type, name e deletedAt
+```
+
+O repositório é injetado via parâmetro nos use cases (Dependency Inversion Principle), permitindo testar toda a regra de negócio com um `Map` em memória, sem banco de dados.
+
+### Testes
+
+Os testes ficam em `backend/__tests__/diet/` e cobrem:
+
+| Arquivo | O que testa |
+|---|---|
+| `validateDiet.test.js` | 25+ casos do helper de validação (todos os campos, modo parcial, normalizeName) |
+| `createDiet.test.js` | use case de criação (autenticação, validação, duplicidade, normalização) |
+| `listDiets.test.js` | listagem e filtro por tipo |
+| `getDietById.test.js` | busca por ID e 404 |
+| `updateDiet.test.js` | atualização parcial, conflito de nome, 404 |
+| `deleteDiet.test.js` | soft delete e 404 |
+| `diet.integration.test.js` | fluxo completo via HTTP (supertest + repositório em memória) |
+
+Para rodar os testes:
+
+```bash
+cd backend
+npm run test:coverage
+```
+
 ---
 
 ## Rodando com Docker
@@ -403,6 +559,172 @@ repositório concreto com Mongoose é injetado pelo controller (DIP). A única
 alteração de código foi em db/conn.js, que passou a ler a URL do banco de uma
 variável de ambiente (MONGO_URL), permanecendo na camada de infraestrutura.
 Entidades e Use Cases ficaram intactos.
+
+---
+
+## 💉 Módulo de Vacinas (Task 32)
+
+Implementação completa do fluxo de vacinas de pets, permitindo registrar, consultar, atualizar e remover vacinas aplicadas ou agendadas para cada animal.
+
+### Funcionalidades
+
+- Registro de vacina vinculada a um pet e ao usuário autenticado
+- Listagem de vacinas por usuário ou por pet
+- Consulta individual por ID
+- Atualização parcial (nome, dose, datas, status, etc.)
+- Remoção lógica (soft delete via `deletedAt`)
+
+### Autenticação
+
+Todas as rotas exigem o header `Authorization: Bearer <token>`.
+
+### Endpoints disponíveis
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /vaccines | Registra uma nova vacina |
+| GET | /vaccines | Lista vacinas do usuário logado |
+| GET | /vaccines/:id | Retorna os detalhes de uma vacina específica |
+| PATCH | /vaccines/:id | Atualiza parcialmente uma vacina |
+| DELETE | /vaccines/:id | Remove uma vacina (soft delete) |
+
+### Exemplo de requisição
+
+POST /vaccines
+
+```json
+{
+  "name": "V10",
+  "manufacturer": "Zoetis",
+  "batchNumber": "LOT-2024-001",
+  "applicationDate": "2024-06-01",
+  "nextDueDate": "2025-06-01",
+  "dose": 1,
+  "status": "applied",
+  "veterinarian": "Dr. João Silva",
+  "notes": "Aplicada sem intercorrências.",
+  "petId": "65a9b8c7d6e5f4a3b2c1d0e9"
+}
+```
+
+### Status possíveis
+
+- `applied` — Vacina já aplicada (padrão)
+- `scheduled` — Vacina agendada
+- `overdue` — Vacina em atraso
+
+### Regras de validação
+
+- O nome é obrigatório e tem limite de 100 caracteres
+- O pet (`petId`) é obrigatório
+- A data de aplicação é obrigatória e deve ser uma data válida
+- A próxima dose (`nextDueDate`), quando informada, deve ser posterior à data de aplicação
+- A dose deve ser um inteiro entre 1 e 20
+- O status deve ser um dos três valores permitidos (`applied`, `scheduled`, `overdue`)
+- Observações limitadas a 1000 caracteres; fabricante e veterinário a 100 cada
+
+### Organização por camadas
+
+A funcionalidade segue os princípios da Clean Architecture:
+
+- **Routers** (`routers/VaccineRouters.js`) — define as rotas HTTP com rate limiting (100 req / 15 min)
+- **Controllers** (`controllers/VaccineController.js`) — recebe a requisição HTTP e delega para o use case correspondente; expõe `setRepository`/`resetRepository` para injeção em testes
+- **Use Cases** (`usecases/vaccine/`) — concentra toda a regra de negócio:
+  - `createVaccine.js` — valida e persiste
+  - `listVaccines.js` — lista por usuário ou por pet
+  - `getVaccineById.js` — consulta individual com verificação de posse
+  - `updateVaccine.js` — atualização parcial com re-validação
+  - `deleteVaccine.js` — soft delete verificando posse
+- **Helpers** (`helpers/validate-vaccine.js`) — funções puras de validação, sem dependência de framework
+- **Model** (`models/Vaccine.js`) — schema Mongoose com índices em `pet._id`, `user._id`, `applicationDate` e `nextDueDate`
+
+O repositório de dados é injetado via parâmetro nos use cases (Dependency Inversion Principle), permitindo testes 100% unitários sem banco de dados.
+
+### Estrutura de arquivos
+
+```
+backend/
+├── routers/VaccineRouters.js
+├── controllers/VaccineController.js
+├── usecases/vaccine/
+│   ├── createVaccine.js
+│   ├── listVaccines.js
+│   ├── getVaccineById.js
+│   ├── updateVaccine.js
+│   └── deleteVaccine.js
+├── helpers/validate-vaccine.js
+└── models/Vaccine.js
+```
+
+### Testes
+
+Os testes ficam em `backend/__tests__/vaccine-unit/` e cobrem todos os use cases, o controller e o helper de validação, incluindo cenários de sucesso, falha de validação, falta de autenticação e tentativa de acesso a vacinas de outro usuário.
+
+| Arquivo de teste | O que cobre |
+|---|---|
+| `createVaccine.test.js` | Criação com sucesso e todas as validações |
+| `listVaccines.test.js` | Listagem por usuário e por pet |
+| `getVaccineById.test.js` | Consulta por ID e verificação de posse |
+| `updateVaccine.test.js` | Atualização parcial e regras de validação |
+| `deleteVaccine.test.js` | Soft delete e verificação de posse |
+| `vaccineController.test.js` | Camada HTTP (controller) com mocks de use cases |
+| `validateVaccine.test.js` | Todas as regras do helper de validação |
+
+Para rodar os testes com relatório de cobertura:
+
+```bash
+cd backend
+npm run test:coverage
+```
+
+---
+
+---
+
+## 📁 Módulo de Upload (Task 60)
+
+Sistema avançado de gerenciamento de arquivos com rastreamento de metadata, suporte a múltiplos tipos e associação com entidades do sistema.
+
+### Tipos aceitos
+
+| Tipo | Extensões | Limite |
+|---|---|---|
+| Imagem | `.png`, `.jpg` | 5MB |
+| Documento | `.pdf` | 10MB |
+
+### Endpoints
+
+Todas exigem `Authorization: Bearer <token>`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | /uploads | Envia um arquivo (form-data, campo `file`) |
+| GET | /uploads | Lista uploads do usuário (filtros: `category`, `entityType`, `entityId`, `limit`) |
+| GET | /uploads/entity/:type/:id | Lista uploads de uma entidade específica |
+| GET | /uploads/:id | Detalhe de um upload |
+| PATCH | /uploads/:id | Atualiza description ou entity |
+| DELETE | /uploads/:id | Soft delete + tentativa de remoção do disco |
+
+### Campos virtuais
+
+- **sizeInKB** — tamanho em kilobytes
+- **sizeInMB** — tamanho em megabytes
+
+### Recursos avançados
+
+- **Associação a entidades** — uploads podem ser vinculados a Pet, User, Message, etc. via `entity: { type, _id }`
+- **StorageAdapter injetável** — desacoplado do disco local, facilita migrar para S3 ou GCS no futuro
+- **Degradação graciosa no delete** — se a remoção física falhar, o soft delete já foi feito
+- **Filtros na listagem** — por categoria, entidade e limite
+- **Validação por categoria** — limites de tamanho diferentes para imagem e documento
+
+### Arquitetura
+
+Mesma estrutura dos outros módulos, com adição do StorageAdapter:
+
+Router → Controller → Use Case → Repository (Mongoose)
+                          ↓
+                    StorageAdapter (disco/S3/GCS)
 
 ---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real

@@ -135,3 +135,40 @@ describe('createNotification', () => {
     });
   });
 });
+
+describe('createNotification - actionUrl', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('persiste actionUrl quando informado (com trim)', async () => {
+    const repo = makeRepo();
+    await createNotification({
+      data: { ...baseData, actionUrl: '  /messages/abc  ' },
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].actionUrl).toBe('/messages/abc');
+  });
+
+  it('usa actionUrl null por padrão', async () => {
+    const repo = makeRepo();
+    await createNotification({
+      data: baseData,
+      sender: { _id: 'u1' },
+      NotificationRepository: repo,
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(repo.create.mock.calls[0][0].actionUrl).toBeNull();
+  });
+
+  it('rejeita actionUrl inválido (422)', async () => {
+    const r = await createNotification({
+      data: { ...baseData, actionUrl: 'javascript:alert(1)' },
+      sender: { _id: 'u1' },
+      NotificationRepository: makeRepo(),
+      NotificationDispatcher: makeDispatcher(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});

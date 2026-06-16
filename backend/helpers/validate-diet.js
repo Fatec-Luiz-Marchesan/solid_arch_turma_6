@@ -12,6 +12,8 @@ const DURATION_DAYS_MIN = 1;
 const DURATION_DAYS_MAX = 3650;
 const MEALS_PER_DAY_MIN = 1;
 const MEALS_PER_DAY_MAX = 12;
+const MEAL_FREQUENCY_MIN = 1;
+const MEAL_FREQUENCY_MAX = 10;
 
 function normalizeName(name) {
   if (typeof name !== 'string') return name;
@@ -125,6 +127,38 @@ function validateDiet(data, { partial = false } = {}) {
     }
   }
 
+  let parsedStartDate = null;
+  if (d.startDate !== undefined) {
+    const dt = new Date(d.startDate);
+    if (isNaN(dt.getTime())) {
+      errors.push('startDate deve ser uma data válida!');
+    } else {
+      parsedStartDate = dt;
+    }
+  }
+
+  if (d.endDate !== undefined) {
+    const dt = new Date(d.endDate);
+    if (isNaN(dt.getTime())) {
+      errors.push('endDate deve ser uma data válida!');
+    } else if (parsedStartDate !== null && dt <= parsedStartDate) {
+      errors.push('endDate deve ser posterior a startDate!');
+    }
+  }
+
+  if (d.mealFrequency !== undefined && d.mealFrequency !== null) {
+    const v = d.mealFrequency;
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < MEAL_FREQUENCY_MIN || v > MEAL_FREQUENCY_MAX) {
+      errors.push(`mealFrequency deve ser um inteiro entre ${MEAL_FREQUENCY_MIN} e ${MEAL_FREQUENCY_MAX}!`);
+    }
+  }
+
+  if (d.pet !== undefined && d.pet !== null) {
+    if (typeof d.pet !== 'object' || Array.isArray(d.pet) || !d.pet._id || String(d.pet._id).trim() === '') {
+      errors.push('pet deve ser um objeto com _id válido!');
+    }
+  }
+
   return { isValid: errors.length === 0, errors };
 }
 
@@ -144,4 +178,7 @@ module.exports = {
   DURATION_DAYS_MAX,
   MEALS_PER_DAY_MIN,
   MEALS_PER_DAY_MAX,
+
+  MEAL_FREQUENCY_MIN,
+  MEAL_FREQUENCY_MAX,
 };

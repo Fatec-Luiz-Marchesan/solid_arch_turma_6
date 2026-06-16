@@ -46,6 +46,10 @@ async function updateDiet({ id, data, user, DietRepository }) {
     updatePayload.restrictions = d.restrictions.map((r) => r.trim());
   }
   if (d.notes !== undefined) updatePayload.notes = d.notes.trim();
+  if (d.startDate !== undefined) updatePayload.startDate = d.startDate ? new Date(d.startDate) : null;
+  if (d.endDate !== undefined) updatePayload.endDate = d.endDate ? new Date(d.endDate) : null;
+  if (d.mealFrequency !== undefined) updatePayload.mealFrequency = typeof d.mealFrequency === 'number' ? d.mealFrequency : null;
+  if (d.pet !== undefined) updatePayload.pet = d.pet && d.pet._id ? { _id: d.pet._id, name: d.pet.name || null } : null;
 
   const updated = await DietRepository.update(id, updatePayload);
   return { success: true, status: 200, diet: updated };

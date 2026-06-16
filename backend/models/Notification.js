@@ -73,6 +73,19 @@ const notificationSchema = new Schema(
       type: Object,
       default: {},
     },
+    actionUrl: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 500,
+      validate: {
+        validator: function (v) {
+          if (v === null || v === undefined || v === '') return true;
+          return /^(https?:\/\/|\/)[^\s]*$/.test(v);
+        },
+        message: 'actionUrl deve ser uma URL http(s) ou caminho relativo válido!',
+      },
+    },
     readAt: {
       type: Date,
       default: null,

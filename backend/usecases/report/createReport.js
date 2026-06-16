@@ -33,9 +33,11 @@ async function createReport({ data, user, ReportRepository }) {
     targetType: d.targetType,
     targetId,
     reason: d.reason,
+    severity: d.severity || 'low',
     description:
       d.description !== undefined ? normalizeText(d.description) : '',
     status: 'pending',
+    moderatorNote: '',
     deletedAt: null,
   });
 

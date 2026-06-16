@@ -1,6 +1,7 @@
 const {
   validateReport,
   validateStatus,
+  validateModeratorNote,
   normalizeText,
 } = require('../../helpers/validate-report');
 
@@ -81,6 +82,24 @@ describe('validateReport helper', () => {
     });
   });
 
+  describe('severity', () => {
+    it('aceita severidades válidas', () => {
+      ['low', 'medium', 'high'].forEach((s) => {
+        expect(validateReport({ ...valid, severity: s }).isValid).toBe(true);
+      });
+    });
+
+    it('rejeita severity inválida', () => {
+      const r = validateReport({ ...valid, severity: 'critical' });
+      expect(r.isValid).toBe(false);
+      expect(r.errors[0]).toMatch(/Severidade/i);
+    });
+
+    it('não valida severity quando ausente', () => {
+      expect(validateReport(valid).isValid).toBe(true);
+    });
+  });
+
   describe('validateStatus', () => {
     it('aceita status válidos', () => {
       ['pending', 'reviewing', 'resolved', 'dismissed'].forEach((s) => {
@@ -92,6 +111,28 @@ describe('validateReport helper', () => {
       const r = validateStatus('archived');
       expect(r.isValid).toBe(false);
       expect(r.errors[0]).toMatch(/Status/i);
+    });
+  });
+
+  describe('validateModeratorNote', () => {
+    it('aceita nota válida', () => {
+      expect(validateModeratorNote('Conteúdo verificado.').isValid).toBe(true);
+    });
+
+    it('aceita string vazia', () => {
+      expect(validateModeratorNote('').isValid).toBe(true);
+    });
+
+    it('rejeita nota não-texto', () => {
+      const r = validateModeratorNote(42);
+      expect(r.isValid).toBe(false);
+      expect(r.errors[0]).toMatch(/moderatorNote/i);
+    });
+
+    it('rejeita nota muito longa', () => {
+      const r = validateModeratorNote('x'.repeat(501));
+      expect(r.isValid).toBe(false);
+      expect(r.errors[0]).toMatch(/moderatorNote/i);
     });
   });
 
