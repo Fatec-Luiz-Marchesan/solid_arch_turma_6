@@ -1,0 +1,36 @@
+# Stack mínima usada pelo CI (e pelo PoC local) para validar a imagem de
+# PRODUÇÃO do backend de ponta a ponta, sem depender do frontend.
+#
+# Uso (também executado por scripts/docker-smoke-test.sh):
+#   docker compose -f docker-compose.ci.yml up --build -d
+#   curl http://localhost:5000/health
+#   curl http://localhost:5000/pets
+#   docker compose -f docker-compose.ci.yml down -v
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: getapet-mongo-ci
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data_ci:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: getapet-backend-ci
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: "5000"
+      MONGO_URI: mongodb://mongo:27017/getapetref
+      CORS_ORIGIN: http://localhost:3000
+      JWT_SECRET: ci-test-secret
+      NODE_ENV: production
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data_ci:

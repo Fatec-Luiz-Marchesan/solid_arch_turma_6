@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <!-- Aqui é um HTML normal mesmo, igual a gente fazia na aula do Léo no primeiro semestre!-->
+  <head>
+    <meta charset="UTF-8" />
+    <title>Socket.io PoC - GetAPet</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #222;
+      }
+      #status {
+        font-weight: bold;
+      }
+      #status.connected {
+        color: #1d9e75;
+      }
+      #status.disconnected {
+        color: #e24b4a;
+      }
+      #log {
+        margin-top: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 12px;
+        height: 240px;
+        overflow-y: auto;
+        background: #fafafa;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 13px;
+      }
+      input,
+      button {
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Socket.io - Prova de Conceito (Task 1)</h1>
+    <p>
+      Status da conexão: <span id="status">conectando...</span>
+    </p>
+
+    <p>
+      Entrar em uma sala (use o <code>_id</code> de um usuário/pet dono):
+    </p>
+    <input id="room" placeholder="ex: 64fa3c2e1234abcd5678ef90" />
+    <button onclick="joinRoom()">Entrar na sala</button>
+
+    <h3>Eventos recebidos</h3>
+    <div id="log"></div>
+
+    <!-- cliente do Socket.io servido pelo próprio backend -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const statusEl = document.getElementById('status')
+      const logEl = document.getElementById('log')
+
+      const socket = io('http://localhost:5000', {
+        withCredentials: true,
+      })
+
+      function log(message) {
+        const time = new Date().toLocaleTimeString()
+        const line = document.createTextNode(`[${time}] ${message}\n`)
+        logEl.appendChild(line)
+        logEl.scrollTop = logEl.scrollHeight
+      }
+
+      socket.on('connect', () => {
+        statusEl.textContent = `conectado (id: ${socket.id})`
+        statusEl.className = 'connected'
+        log('Conectado ao servidor Socket.io')
+      })
+
+      socket.on('disconnect', () => {
+        statusEl.textContent = 'desconectado'
+        statusEl.className = 'disconnected'
+        log('Desconectado do servidor')
+      })
+
+      // Eventos disparados pelo PetController (Task 1: exemplo funcional só pra demonstrar o socket!)
+      socket.on('pet:scheduled', (data) => {
+        log(`pet:scheduled -> ${JSON.stringify(data)}`)
+      })
+
+      socket.on('pet:adoption-concluded', (data) => {
+        log(`pet:adoption-concluded -> ${JSON.stringify(data)}`)
+      })
+
+      function joinRoom() {
+        const room = document.getElementById('room').value.trim()
+        if (!room) return
+        socket.emit('join', room)
+        log(`Solicitado ingresso na sala "${room}"`)
+      }
+    </script>
+  </body>
+</html>

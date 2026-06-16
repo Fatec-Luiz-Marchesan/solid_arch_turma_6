@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const AppConfig = require("../infra/config");
 
 // middleware to validate token
 const checkToken = (req, res, next) => {
@@ -8,7 +9,7 @@ const checkToken = (req, res, next) => {
   if (!token) return res.status(401).json({ message: "Acesso negado!" });
 
   try {
-    const verified = jwt.verify(token, "nossosecret");
+    const verified = jwt.verify(token, AppConfig.jwtSecret);
     req.user = verified;
     next(); // to continue the flow
   } catch (err) {

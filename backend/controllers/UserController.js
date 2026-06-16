@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/User')
+const AppConfig = require('../infra/config')
 
 // helpers
 const getUserByToken = require('../helpers/get-user-by-token')
@@ -19,34 +20,34 @@ module.exports = class UserController {
 
     // validations
     if (!name) {
-      res.status(422).json({ message: 'O nome é obrigatório!' })
+      res.status(422).json({ message: 'O nome é obrigatório! Duuh!' })
       return
     }
 
     if (!email) {
-      res.status(422).json({ message: 'O e-mail é obrigatório!' })
+      res.status(422).json({ message: 'O e-mail é obrigatório! Também! Você vai ficar perguntando?' })
       return
     }
 
     if (!phone) {
-      res.status(422).json({ message: 'O telefone é obrigatório!' })
+      res.status(422).json({ message: 'O telefone é obrigatório! Aqui pra verificação em 2 passos' })
       return
     }
 
     if (!password) {
-      res.status(422).json({ message: 'A senha é obrigatória!' })
+      res.status(422).json({ message: 'A senha é obrigatória! Sem essa você não entra!' })
       return
     }
 
     if (!confirmpassword) {
-      res.status(422).json({ message: 'A confirmação de senha é obrigatória!' })
+      res.status(422).json({ message: 'A confirmação de senha é obrigatória! Eu preciso explicar?!' })
       return
     }
 
     if (password != confirmpassword) {
       res
         .status(422)
-        .json({ message: 'A senha e a confirmação precisam ser iguais!' })
+        .json({ message: 'A senha e a confirmação precisam ser iguais! Eu preciso explicar denovo?!' })
       return
     }
 
@@ -54,7 +55,7 @@ module.exports = class UserController {
     const userExists = await User.findOne({ email: email })
 
     if (userExists) {
-      res.status(422).json({ message: 'Por favor, utilize outro e-mail!' })
+      res.status(422).json({ message: 'Por favor, utilize outro e-mail! Tá tentando criar uma smurf né!' })
       return
     }
 
@@ -119,7 +120,7 @@ module.exports = class UserController {
 
     if (req.headers.authorization) {
       const token = getToken(req)
-      const decoded = jwt.verify(token, 'nossosecret')
+      const decoded = jwt.verify(token, AppConfig.jwtSecret)
 
       currentUser = await User.findById(decoded.id)
 

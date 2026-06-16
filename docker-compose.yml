@@ -1,0 +1,82 @@
+# Stack de desenvolvimento local: Mongo + Backend (Node/Express) + Frontend (React)
+#
+# Uso:
+#   docker compose up --build
+#
+# - Backend:  http://localhost:5000  (healthcheck em /health)
+# - Frontend: http://localhost:3000
+# - Mongo:    mongodb://localhost:27017/getapetref
+#
+# Nenhum destes serviços conhece Controllers/Use Cases/Entidades do projeto.
+# A "ponte" entre o container e o código é feita exclusivamente por variáveis
+# de ambiente, lidas pelo backend através de `backend/infra/config`
+# (Dependency Inversion Principle).
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: getapet-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: getapet-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: "5000"
+      MONGO_URI: mongodb://mongo:27017/getapetref
+      CORS_ORIGIN: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-nossosecret}
+      NODE_ENV: development
+    depends_on:
+      - mongo
+    volumes:
+      # Hot-reload: o código local é montado dentro do container.
+      - ./backend:/usr/src/app
+      # ...mas o node_modules instalado na imagem é preservado (evita
+      # conflitos entre módulos nativos do host e do container).
+      - /usr/src/app/node_modules
+      # Uploads de imagens persistem entre `docker compose down`/`up`.
+      - backend_images_pets:/usr/src/app/public/images/pets
+      - backend_images_users:/usr/src/app/public/images/users
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:5000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: getapet-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API: http://localhost:5000/
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  mongo_data:
+  backend_images_pets:
+  backend_images_users:

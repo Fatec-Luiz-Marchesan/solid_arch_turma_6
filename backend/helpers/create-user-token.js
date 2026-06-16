@@ -1,21 +1,20 @@
 const jwt = require("jsonwebtoken");
+const AppConfig = require("../infra/config");
 
-const createUserToken = async (user, req, res) => {
-  const token = jwt.sign(
-    // payload data
-    {
-      name: user.name,
-      id: user._id,
-    },
-    "nossosecret"
-  );
+const User = require("../models/User");
 
-  // return token
-  res.status(200).json({
-    message: "Você está autenticado!",
-    token: token,
-    userId: user._id,
-  });
+// get user by jwt token
+const getUserByToken = async (token) => {
+  if (!token) return res.status(401).json({ error: "Acesso negado!" });
+
+  // find user
+  const decoded = jwt.verify(token, AppConfig.jwtSecret);
+
+  const userId = decoded.id;
+
+  const user = await User.findOne({ _id: userId });
+
+  return user;
 };
 
-module.exports = createUserToken;
+module.exports = getUserByToken;

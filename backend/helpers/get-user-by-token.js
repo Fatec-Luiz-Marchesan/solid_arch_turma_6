@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const AppConfig = require("../infra/config");
 
 const User = require("../models/User");
 
@@ -7,7 +8,7 @@ const getUserByToken = async (token) => {
   if (!token) return res.status(401).json({ error: "Acesso negado!" });
 
   // find user
-  const decoded = jwt.verify(token, "nossosecret");
+  const decoded = jwt.verify(token, AppConfig.jwtSecret);
 
   const userId = decoded.id;
 

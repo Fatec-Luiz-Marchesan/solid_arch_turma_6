@@ -5,6 +5,9 @@ const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const ObjectId = require('mongoose').Types.ObjectId
 
+// infra (porta de notificações em tempo real - ver infra/realtime pra conectar com o que a gente fez)
+const { realtimeNotifier } = require('../infra/realtime')
+
 module.exports = class PetController {
   // create a pet
   static async create(req, res) {
@@ -16,33 +19,33 @@ module.exports = class PetController {
     const images = req.files
     const available = true
 
-    // console.log(req.body)
+    
     console.log(images)
     // return
 
-    // validations
+    // validations as validações e as obrigatoriedades do formulário
     if (!name) {
-      res.status(422).json({ message: 'O nome é obrigatório!' })
+      res.status(422).json({ message: 'O nome é obrigatório! Ou seu pet não tem nome?' })
       return
     }
 
     if (!age) {
-      res.status(422).json({ message: 'A idade é obrigatória!' })
+      res.status(422).json({ message: 'A idade é obrigatória! Também né, preciso explicar?' })
       return
     }
 
     if (!weight) {
-      res.status(422).json({ message: 'O peso é obrigatório!' })
+      res.status(422).json({ message: 'O peso é obrigatório! Tá levando seu pet escondido na churrascaria né!' })
       return
     }
 
     if (!color) {
-      res.status(422).json({ message: 'A cor é obrigatória!' })
+      res.status(422).json({ message: 'A cor é obrigatória! A cor mais chique é o caramelo!' })
       return
     }
 
     if (!images) {
-      res.status(422).json({ message: 'A imagem é obrigatória!' })
+      res.status(422).json({ message: 'A imagem é obrigatória! Como vão saber como é o seu pet!' })
       return
     }
 
@@ -303,6 +306,23 @@ module.exports = class PetController {
 
     await Pet.findByIdAndUpdate(pet._id, pet)
 
+    // Notifica em tempo real o dono do pet, caso ele esteja com o
+    // frontend conectado via Socket.io (room = id do usuário dono do pet) 
+    // aqui faz aquela notificação que te escravisa! assim como as das redes sociais!.
+    realtimeNotifier.emit(
+      'pet:scheduled',
+      {
+        petId: pet._id,
+        petName: pet.name,
+        adopter: {
+          _id: user._id,
+          name: user.name,
+        },
+        message: `${user.name} agendou uma visita para conhecer ${pet.name}!`,
+      },
+      pet.user._id.toString(),
+    )
+
     res.status(200).json({
       message: `A visita foi agendada com sucesso, entre em contato com ${pet.user.name} no telefone: ${pet.user.phone}`,
     })
@@ -318,6 +338,26 @@ module.exports = class PetController {
     pet.available = false
 
     await Pet.findByIdAndUpdate(pet._id, pet)
+
+    // Notifica em tempo real: o "feed" público (sem room) recebe o aviso
+    // de que um pet saiu da lista de disponiveis, e o adotante (sala
+    // dedicada com o seu próprio _id) recebe a confirmação direta deixando tudo automático.
+    realtimeNotifier.emit('pet:adoption-concluded', {
+      petId: pet._id,
+      petName: pet.name,
+    })
+
+    if (pet.adopter && pet.adopter._id) {
+      realtimeNotifier.emit(
+        'pet:adoption-concluded',
+        {
+          petId: pet._id,
+          petName: pet.name,
+          message: `Parabéns! A adoção de ${pet.name} foi concluída!`,
+        },
+        pet.adopter._id.toString(),
+      )
+    }
 
     res.status(200).json({
       pet: pet,

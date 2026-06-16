@@ -1,0 +1,24 @@
+node_modules
+npm-debug.log*
+
+# Controle de versão e arquivos de IDE não fazem parte da imagem
+.git
+.gitignore
+.vscode
+
+# Segredos/ambiente locais nunca devem entrar na imagem
+.env
+.env.*
+!.env.example
+
+# Arquivos da própria infraestrutura Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Uploads de desenvolvimento - em runtime essas pastas são recriadas
+# (Dockerfile) ou montadas via volume pelo docker-compose.
+public/images/pets/*
+public/images/users/*
+!public/images/pets/.gitkeep
+!public/images/users/.gitkeep

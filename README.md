@@ -7,6 +7,146 @@ A escala de pontuação (story points) segue a sequência de Fibonacci adaptada:
 
 ---
 
+## 🐳 Docker (implementação da Task 95)
+
+A **Task 95 - Integrar nova tecnologia: Docker** adiciona containerização ao
+projeto (backend Node.js, frontend React e MongoDB), seguindo o mesmo
+princípio das outras integrações de tecnologia do backlog (ex: Task 1 -
+Socket.io): a nova tecnologia entra como **infraestrutura externa**, sem
+poluir Controllers, Models ou Use Cases.
+
+### Arquitetura: Docker como "adapter" externo (Dependency Inversion Principle)
+
+O Docker, por si só, não é uma biblioteca que se importa dentro do código -
+ele é o ambiente de execução. A "porta" que permite essa inversão de
+dependência aqui é a configuração via variáveis de ambiente:
+
+- **`backend/infra/config/index.js`** - novo módulo (porta de configuração),
+  análogo ao `infra/realtime/RealtimeNotifierPort.js` da Task 1. Centraliza a
+  leitura de `process.env` (porta HTTP, `MONGO_URI`, `CORS_ORIGIN`,
+  `JWT_SECRET`, `NODE_ENV`) com defaults que reproduzem o comportamento
+  anterior (`localhost:27017`, `http://localhost:3000`, `"nossosecret"`).
+- `backend/db/conn.js`, `backend/index.js` e os helpers de JWT
+  (`check-token.js`, `create-user-token.js`, `get-user-by-token.js`,
+  `UserController.checkUser`) passaram a depender **apenas** dessa porta -
+  nenhum deles sabe que existe um container Docker, uma rede chamada `mongo`
+  ou um `docker-compose.yml`.
+- Os arquivos `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml`
+  e `docker-compose.ci.yml` são os "adapters concretos": é só ali que a
+  tecnologia Docker aparece, fornecendo os valores concretos dessas variáveis
+  de ambiente.
+
+Se um dia o time decidir não usar mais Docker (ex: trocar por PM2,
+Kubernetes, systemd...), basta trocar quem fornece as variáveis de ambiente -
+nenhuma linha de Controller/Model/Use Case precisa mudar.
+
+### Como rodar o projeto localmente com Docker
+
+Pré-requisitos: Docker e Docker Compose v2 (`docker compose ...`).
+
+```bash
+# na raiz do projeto
+docker compose up --build
+```
+
+Isso sobe três serviços:
+
+| Serviço    | URL local                         | Descrição                                  |
+|------------|------------------------------------|---------------------------------------------|
+| `mongo`    | `mongodb://localhost:27017/getapetref` | Banco MongoDB (imagem oficial `mongo:6`) |
+| `backend`  | `http://localhost:5000`            | API Express + Socket.io (Node 20, hot-reload via nodemon) |
+| `frontend` | `http://localhost:3000`            | App React (CRA dev server, hot-reload)     |
+
+Healthcheck do backend: `GET http://localhost:5000/health` (também usado pelo
+`HEALTHCHECK` do `Dockerfile` e pela PoC abaixo).
+
+Os uploads de imagens (`backend/public/images/pets` e `.../users`) e os dados
+do Mongo persistem em volumes Docker entre execuções (`docker compose down`
+sem `-v` mantém os dados).
+
+Variáveis de ambiente opcionais ficam documentadas em `.env.example`
+(raiz) e `backend/.env.example` (caso queira rodar `npm start` fora do
+Docker).
+
+### Prova de Conceito (PoC)
+
+A PoC da Task 95 prova, de ponta a ponta, que a **imagem de produção** do
+backend (`backend/Dockerfile`, alvo `production`) builda, sobe em container,
+conecta no MongoDB containerizado (via `MONGO_URI`) e responde HTTP - sem
+nenhum arquivo do host além do `docker-compose.ci.yml`.
+
+```bash
+./scripts/docker-smoke-test.sh
+# ou, dentro de backend/:
+npm run test:docker
+```
+
+O script:
+1. Builda e sobe `docker-compose.ci.yml` (Mongo + backend em modo `production`);
+2. Aguarda `GET /health` responder `200`;
+3. Chama `GET /pets` e valida a resposta `{ "pets": [...] }`;
+4. Derruba os containers ao final (mesmo em caso de falha).
+
+> **Sobre o endpoint de exemplo:** o template da Task 95 sugere validar a
+> integração "num endpoint de Diet". Este projeto (`solid_arch_turma_6`) é um
+> sistema de **adoção de pets** e não possui um módulo `Diet` - por isso,
+> assim como a Task 1 trocou o módulo sugerido (`Review`) pelo evento
+> `pet:scheduled`, esta PoC usa o endpoint equivalente já existente:
+> `GET /pets` (`PetController.getAll`).
+
+### Integração Contínua (CI)
+
+O workflow `.github/workflows/docker-ci.yml` roda em todo push para `main`/
+`tech/**` e em Pull Requests para `main`:
+
+- builda as imagens do backend (`development` e `production`) e do frontend
+  (`production`);
+- valida a sintaxe de `docker-compose.yml` e `docker-compose.ci.yml`
+  (`docker compose ... config`);
+- executa `scripts/docker-smoke-test.sh` (a mesma PoC descrita acima).
+
+### Checks de CI/CodeQL corrigidos
+
+Durante a abertura do PR, três checks falharam e foram corrigidos nesta
+mesma branch:
+
+1. **CodeQL - "Missing rate limiting" (8 alertas high)** em
+   `backend/routers/PetRouters.js` e `backend/routers/UserRouters.js`: as
+   rotas que fazem autorização (`helpers/check-token`) e acesso ao banco não
+   tinham nenhum rate limiter. Adicionado `backend/infra/security/rateLimiter.js`
+   (adapter baseado em `express-rate-limit`, mesmo padrão de
+   `infra/config`/`infra/realtime`):
+   - `apiLimiter` - aplicado globalmente em `index.js` (300 req/15min por IP),
+     cobrindo todas as rotas de `/pets` e `/users`;
+   - `authLimiter` - limite mais restrito (20 req/15min) aplicado em
+     `POST /users/register` e `POST /users/login` (mitiga brute-force).
+2. **Docker PoC - "Permission denied" ao rodar `./scripts/docker-smoke-test.sh`**:
+   o bit de execução do script não estava preservado. Corrigido o modo do
+   arquivo no git (`100755`) e o workflow passou a chamar
+   `bash ./scripts/docker-smoke-test.sh`, que funciona independente do bit
+   de execução.
+
+### Resumo dos arquivos adicionados/alterados
+
+- `backend/Dockerfile`, `backend/.dockerignore`, `backend/.env.example`
+- `frontend/Dockerfile`, `frontend/.dockerignore`
+- `docker-compose.yml` (stack de desenvolvimento) e `docker-compose.ci.yml`
+  (stack mínima para CI/PoC)
+- `.env.example` (raiz)
+- `scripts/docker-smoke-test.sh` (PoC)
+- `.github/workflows/docker-ci.yml`
+- `backend/infra/config/index.js` (nova "porta" de configuração)
+- `backend/infra/security/rateLimiter.js` (nova "porta" de rate limiting)
+- `backend/db/conn.js`, `backend/index.js`, `backend/helpers/check-token.js`,
+  `backend/helpers/create-user-token.js`, `backend/helpers/get-user-by-token.js`,
+  `backend/controllers/UserController.js` - passaram a usar
+  `infra/config` em vez de valores fixos (`localhost`, `"nossosecret"`).
+- `backend/routers/UserRouters.js` - `authLimiter` em `/register` e `/login`.
+- `backend/package.json` - nova dependência `express-rate-limit` e script
+  `test:docker`.
+
+---
+
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
