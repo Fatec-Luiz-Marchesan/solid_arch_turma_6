@@ -135,4 +135,17 @@ describe('User Model — validações do schema', () => {
       expect(u.bio).toBe('Olá mundo');
     });
   });
+  describe('campo birthDate', () => {
+    it('é opcional e tem default null', () => {
+      const u = new User(validData);
+      const err = u.validateSync();
+      expect(err).toBeUndefined();
+      expect(u.birthDate).toBeNull();
+    });
+
+    it('aceita birthDate quando fornecido', () => {
+      const u = new User({ ...validData, birthDate: new Date('2000-01-01') });
+      expect(u.birthDate).toBeInstanceOf(Date);
+    });
+  });
 });

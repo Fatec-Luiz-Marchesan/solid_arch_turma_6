@@ -28,6 +28,10 @@ const User = mongoose.model(
       maxlength: 200,
       default: '',
     },
+    birthDate: {
+      type: Date,
+      default: null,
+    },
   }, {timestamps: true}),
 )
 

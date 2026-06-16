@@ -15,6 +15,7 @@ const PHONE_MIN = 8;
 const PHONE_MAX = 20;
 const BIO_MAX = 200;
 const PASSWORD_MIN = 6;
+const MIN_AGE = 13;
 
 function validateUserEdit(data) {
   const errors = [];
@@ -48,6 +49,20 @@ function validateUserEdit(data) {
     }
   }
 
+if (d.birthDate !== undefined && d.birthDate !== null && d.birthDate !== '') {
+    const bd = new Date(d.birthDate);
+    if (isNaN(bd.getTime())) {
+      errors.push('Data de nascimento inválida!');
+    } else if (bd.getTime() > Date.now()) {
+      errors.push('Data de nascimento não pode ser no futuro!');
+    } else {
+      const age = Math.floor((Date.now() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      if (age < MIN_AGE) {
+        errors.push(`Usuário deve ter pelo menos ${MIN_AGE} anos!`);
+      }
+    }
+  }
+
   if (d.password && d.confirmpassword && d.password !== d.confirmpassword) {
     errors.push('As senhas não conferem!');
   }
@@ -68,4 +83,5 @@ module.exports = {
   PHONE_MAX,
   BIO_MAX,
   PASSWORD_MIN,
+  MIN_AGE,
 };
