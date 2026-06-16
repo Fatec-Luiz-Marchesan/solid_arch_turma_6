@@ -8,6 +8,7 @@ const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const createUserToken = require('../helpers/create-user-token')
 const { imageUpload } = require('../helpers/image-upload')
+const { validateRegister, validateLogin } = require('../helpers/validate-auth')
 
 module.exports = class UserController {
   static async register(req, res) {
@@ -83,13 +84,9 @@ module.exports = class UserController {
     const email = req.body.email
     const password = req.body.password
 
-    if (!email) {
-      res.status(422).json({ message: 'O e-mail é obrigatório!' })
-      return
-    }
-
-    if (!password) {
-      res.status(422).json({ message: 'A senha é obrigatória!' })
+    const loginValidation = validateLogin(req.body)
+    if (!loginValidation.isValid) {
+      res.status(422).json({ message: loginValidation.errors[0] })
       return
     }
 
@@ -168,35 +165,9 @@ module.exports = class UserController {
     }
 
     // validations
-    if (!name) {
-      res.status(422).json({ message: 'O nome é obrigatório!' })
-      return
-    }
-
-    user.name = name
-
-    if (!email) {
-      res.status(422).json({ message: 'O e-mail é obrigatório!' })
-      return
-    }
-
-    // check if user exists
-    const userExists = await User.findOne({ email: email })
-
-    if (user.email !== email && userExists) {
-      res.status(422).json({ message: 'Por favor, utilize outro e-mail!' })
-      return
-    }
-
-    user.email = email
-
-    if (image) {
-      const imageName = req.file.filename
-      user.image = imageName
-    }
-
-    if (!phone) {
-      res.status(422).json({ message: 'O telefone é obrigatório!' })
+    const validation = validateRegister(req.body)
+    if (!validation.isValid) {
+      res.status(422).json({ message: validation.errors[0] })
       return
     }
 
