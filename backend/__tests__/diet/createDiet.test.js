@@ -113,6 +113,7 @@ describe('createDiet use case', () => {
     expect(p.notes).toBe('Tomar bastante água.');
   });
 });
+
 describe('createDiet - mealsPerDay', () => {
   it('persiste mealsPerDay quando informado', async () => {
     const repo = makeRepo();

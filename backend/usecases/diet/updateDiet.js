@@ -41,6 +41,7 @@ async function updateDiet({ id, data, user, DietRepository }) {
   if (d.goal !== undefined) updatePayload.goal = d.goal.trim();
   if (d.dailyCalories !== undefined) updatePayload.dailyCalories = d.dailyCalories;
   if (d.durationDays !== undefined) updatePayload.durationDays = d.durationDays;
+  
   if (d.mealsPerDay !== undefined) updatePayload.mealsPerDay = d.mealsPerDay;
   if (d.restrictions !== undefined) {
     updatePayload.restrictions = d.restrictions.map((r) => r.trim());

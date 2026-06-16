@@ -132,7 +132,6 @@ describe('updateDiet use case', () => {
     expect(payload.notes).toBe('beber água');
   });
 });
-
 describe('updateDiet - mealsPerDay', () => {
   it('atualiza mealsPerDay (200)', async () => {
     const repo = makeRepo();
