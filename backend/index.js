@@ -42,3 +42,5 @@ app.listen(5000)
 const NotificationRoutes = require('./routers/NotificationRouters');
 
 app.use('/notifications', NotificationRoutes);
+const LocationRoutes = require('./routers/LocationRouters')
+app.use('/locations', LocationRoutes)
