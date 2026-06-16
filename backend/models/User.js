@@ -22,6 +22,12 @@ const User = mongoose.model(
     phone: {
       type: String,
     },
+     bio: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: '',
+    },
   }, {timestamps: true}),
 )
 

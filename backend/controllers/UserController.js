@@ -8,6 +8,7 @@ const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const createUserToken = require('../helpers/create-user-token')
 const { imageUpload } = require('../helpers/image-upload')
+const { validateUserEdit } = require('../helpers/validate-user-edit')
 const { validateRegister, validateLogin } = require('../helpers/validate-auth')
 
 module.exports = class UserController {
@@ -19,20 +20,13 @@ module.exports = class UserController {
     const confirmpassword = req.body.confirmpassword
 
     // validations
-    if (!name) {
-      res.status(422).json({ message: 'O nome é obrigatório!' })
+    const editValidation = validateUserEdit(req.body)
+    if (!editValidation.isValid) {
+      res.status(422).json({ message: editValidation.errors[0] })
       return
     }
 
-    if (!email) {
-      res.status(422).json({ message: 'O e-mail é obrigatório!' })
-      return
-    }
-
-    if (!phone) {
-      res.status(422).json({ message: 'O telefone é obrigatório!' })
-      return
-    }
+    user.name = name
 
     if (!password) {
       res.status(422).json({ message: 'A senha é obrigatória!' })
@@ -172,6 +166,9 @@ module.exports = class UserController {
     }
 
     user.phone = phone
+
+    const bio = req.body.bio
+    user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
 
     // check if password match
     if (password != confirmpassword) {
