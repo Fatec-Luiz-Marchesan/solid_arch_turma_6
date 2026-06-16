@@ -33,6 +33,18 @@ const dietSchema = new Schema(
       max: 3650,
       default: null,
     },
+    mealsPerDay: {
+      type: Number,
+      min: 1,
+      max: 12,
+      default: null,
+      validate: {
+        validator: function (v) {
+          return v === null || Number.isInteger(v);
+        },
+        message: 'mealsPerDay deve ser um número inteiro!',
+      },
+    },
     restrictions: {
       type: [String],
       default: [],

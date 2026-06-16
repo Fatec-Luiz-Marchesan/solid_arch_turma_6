@@ -10,6 +10,9 @@ const DAILY_CALORIES_MIN = 0;
 const DAILY_CALORIES_MAX = 10000;
 const DURATION_DAYS_MIN = 1;
 const DURATION_DAYS_MAX = 3650;
+const MEALS_PER_DAY_MIN = 1;
+const MEALS_PER_DAY_MAX = 12;
+
 const MEAL_FREQUENCY_MIN = 1;
 const MEAL_FREQUENCY_MAX = 10;
 
@@ -104,6 +107,15 @@ function validateDiet(data, { partial = false } = {}) {
     }
   }
 
+if (d.mealsPerDay !== undefined && d.mealsPerDay !== null) {
+    const v = d.mealsPerDay;
+    if (typeof v !== 'number' || Number.isNaN(v) || !Number.isFinite(v)) {
+      errors.push('mealsPerDay deve ser um número!');
+    } else if (!Number.isInteger(v) || v < MEALS_PER_DAY_MIN || v > MEALS_PER_DAY_MAX) {
+      errors.push(`mealsPerDay deve ser um inteiro entre ${MEALS_PER_DAY_MIN} e ${MEALS_PER_DAY_MAX}!`);
+    }
+  }
+
   if (d.restrictions !== undefined) {
     validateRestrictions(d.restrictions, errors);
   }
@@ -181,6 +193,8 @@ module.exports = {
   DAILY_CALORIES_MAX,
   DURATION_DAYS_MIN,
   DURATION_DAYS_MAX,
+  MEALS_PER_DAY_MIN,
+  MEALS_PER_DAY_MAX,
   MEAL_FREQUENCY_MIN,
   MEAL_FREQUENCY_MAX,
 };

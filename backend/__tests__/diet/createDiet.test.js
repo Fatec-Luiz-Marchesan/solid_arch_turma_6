@@ -113,3 +113,35 @@ describe('createDiet use case', () => {
     expect(p.notes).toBe('Tomar bastante água.');
   });
 });
+
+describe('createDiet - mealsPerDay', () => {
+  it('persiste mealsPerDay quando informado', async () => {
+    const repo = makeRepo();
+    await createDiet({
+      data: { name: 'Dieta Proteica', type: 'high-protein', mealsPerDay: 6 },
+      user: { _id: 'u1', name: 'Ana' },
+      DietRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].mealsPerDay).toBe(6);
+  });
+
+  it('usa mealsPerDay null por padrão', async () => {
+    const repo = makeRepo();
+    await createDiet({
+      data: { name: 'Dieta Proteica', type: 'high-protein' },
+      user: { _id: 'u1' },
+      DietRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].mealsPerDay).toBeNull();
+  });
+
+  it('rejeita mealsPerDay inválido (422)', async () => {
+    const r = await createDiet({
+      data: { name: 'Dieta Proteica', type: 'high-protein', mealsPerDay: 99 },
+      user: { _id: 'u1' },
+      DietRepository: makeRepo(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});
