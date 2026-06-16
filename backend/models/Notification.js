@@ -107,7 +107,11 @@ const notificationSchema = new Schema(
       type: Date,
       default: null,
     },
-    expiresAt: {
+     expiresAt: {
+      type: Date,
+      default: null,
+    },
+    scheduledAt: {
       type: Date,
       default: null,
     },

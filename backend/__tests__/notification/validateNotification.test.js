@@ -200,4 +200,34 @@ describe('validateNotification - actionUrl', () => {
     const longUrl = '/' + 'a'.repeat(500);
     expect(validateNotification({ ...valid, actionUrl: longUrl }).isValid).toBe(false);
   });
+  describe('validateNotification - scheduledAt', () => {
+  const valid = {
+    type: 'message_received',
+    title: 'Nova mensagem',
+    body: 'Você recebeu uma mensagem nova',
+    recipientId: 'u1',
+  };
+
+  it('aceita ausência de scheduledAt', () => {
+    expect(validateNotification(valid).isValid).toBe(true);
+  });
+
+  it('aceita data futura', () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    expect(validateNotification({ ...valid, scheduledAt: future }).isValid).toBe(true);
+  });
+
+  it('rejeita data passada', () => {
+    const past = new Date(Date.now() - 86400000).toISOString();
+    const r = validateNotification({ ...valid, scheduledAt: past });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /futuro/.test(e))).toBe(true);
+  });
+
+  it('rejeita data inválida', () => {
+    const r = validateNotification({ ...valid, scheduledAt: 'nao-e-data' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /válida/.test(e))).toBe(true);
+  });
+});
 });
