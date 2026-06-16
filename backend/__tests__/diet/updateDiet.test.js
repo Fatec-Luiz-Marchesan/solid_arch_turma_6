@@ -132,3 +132,26 @@ describe('updateDiet use case', () => {
     expect(payload.notes).toBe('beber água');
   });
 });
+describe('updateDiet - mealsPerDay', () => {
+  it('atualiza mealsPerDay (200)', async () => {
+    const repo = makeRepo();
+    const r = await updateDiet({
+      id: 'diet1',
+      data: { mealsPerDay: 4 },
+      user: { _id: 'u1' },
+      DietRepository: repo,
+    });
+    expect(r.status).toBe(200);
+    expect(repo.update).toHaveBeenCalledWith('diet1', { mealsPerDay: 4 });
+  });
+
+  it('rejeita mealsPerDay inválido (422)', async () => {
+    const r = await updateDiet({
+      id: 'diet1',
+      data: { mealsPerDay: -1 },
+      user: { _id: 'u1' },
+      DietRepository: makeRepo(),
+    });
+    expect(r.status).toBe(422);
+  });
+});

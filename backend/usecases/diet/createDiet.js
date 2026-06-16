@@ -28,6 +28,8 @@ async function createDiet({ data, user, DietRepository }) {
     goal: d.goal !== undefined ? d.goal.trim() : '',
     dailyCalories: typeof d.dailyCalories === 'number' ? d.dailyCalories : null,
     durationDays: typeof d.durationDays === 'number' ? d.durationDays : null,
+    mealsPerDay: typeof d.mealsPerDay === 'number' ? d.mealsPerDay : null,
+    
     restrictions: Array.isArray(d.restrictions)
       ? d.restrictions.map((r) => r.trim())
       : [],

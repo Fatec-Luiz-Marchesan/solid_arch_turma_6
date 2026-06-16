@@ -163,3 +163,34 @@ describe('validateDiet helper', () => {
     });
   });
 });
+describe('validateDiet - mealsPerDay', () => {
+  const valid = { name: 'Dieta Proteica', type: 'high-protein' };
+
+  it('aceita ausência de mealsPerDay', () => {
+    expect(validateDiet(valid).isValid).toBe(true);
+  });
+
+  it('aceita inteiro válido', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: 5 }).isValid).toBe(true);
+  });
+
+  it('aceita null', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: null }).isValid).toBe(true);
+  });
+
+  it('rejeita número não-inteiro', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: 3.5 }).isValid).toBe(false);
+  });
+
+  it('rejeita abaixo do mínimo', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: 0 }).isValid).toBe(false);
+  });
+
+  it('rejeita acima do máximo', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: 13 }).isValid).toBe(false);
+  });
+
+  it('rejeita valor não-numérico', () => {
+    expect(validateDiet({ ...valid, mealsPerDay: '6' }).isValid).toBe(false);
+  });
+});
