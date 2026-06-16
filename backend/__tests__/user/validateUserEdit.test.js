@@ -89,4 +89,47 @@ describe('validateUserEdit', () => {
   it('rejeita dados nulos', () => {
     expect(validateUserEdit(null).isValid).toBe(false);
   });
+  describe('validateUserEdit - birthDate', () => {
+  const valid = {
+    name: 'João Silva',
+    email: 'joao@email.com',
+    phone: '11999998888',
+  };
+
+  it('aceita ausência de birthDate', () => {
+    expect(validateUserEdit(valid).isValid).toBe(true);
+  });
+
+  it('aceita birthDate null', () => {
+    expect(validateUserEdit({ ...valid, birthDate: null }).isValid).toBe(true);
+  });
+
+  it('aceita birthDate vazio', () => {
+    expect(validateUserEdit({ ...valid, birthDate: '' }).isValid).toBe(true);
+  });
+
+  it('aceita usuário com 13+ anos', () => {
+    expect(validateUserEdit({ ...valid, birthDate: '2000-01-01' }).isValid).toBe(true);
+  });
+
+  it('rejeita menor de 13 anos', () => {
+    const tenYearsAgo = new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString();
+    const r = validateUserEdit({ ...valid, birthDate: tenYearsAgo });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/13/);
+  });
+
+  it('rejeita data futura', () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const r = validateUserEdit({ ...valid, birthDate: future });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/futuro/);
+  });
+
+  it('rejeita data inválida', () => {
+    const r = validateUserEdit({ ...valid, birthDate: 'nao-e-data' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors[0]).toMatch(/inválida/i);
+  });
+});
 });

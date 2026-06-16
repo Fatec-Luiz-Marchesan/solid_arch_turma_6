@@ -170,6 +170,10 @@ module.exports = class UserController {
     const bio = req.body.bio
     user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
 
+    if (req.body.birthDate !== undefined) {
+      user.birthDate = req.body.birthDate ? new Date(req.body.birthDate) : null
+    }
+
     // check if password match
     if (password != confirmpassword) {
       res.status(422).json({ error: 'As senhas não conferem.' })
