@@ -1,4 +1,13 @@
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(email) {
+  if (typeof email !== 'string' || email.length > 254) return false;
+  const parts = email.split('@');
+  if (parts.length !== 2) return false;
+  const [local, domain] = parts;
+  if (!local || local.length > 64) return false;
+  if (!domain || !domain.includes('.')) return false;
+  if (domain.startsWith('.') || domain.endsWith('.')) return false;
+  return true;
+}
 
 const NAME_MIN = 2;
 const NAME_MAX = 80;
@@ -11,7 +20,6 @@ function validateRegister(data) {
   const errors = [];
   const d = data || {};
 
-  // Nome
   if (!d.name || typeof d.name !== 'string' || d.name.trim().length === 0) {
     errors.push('O nome é obrigatório!');
   } else if (d.name.trim().length < NAME_MIN) {
@@ -20,7 +28,6 @@ function validateRegister(data) {
     errors.push(`O nome não pode passar de ${NAME_MAX} caracteres!`);
   }
 
-  // E-mail
   if (!d.email || typeof d.email !== 'string' || d.email.trim().length === 0) {
     errors.push('O e-mail é obrigatório!');
   } else {
@@ -28,12 +35,11 @@ function validateRegister(data) {
 
     if (email.length > EMAIL_MAX) {
       errors.push('O e-mail é muito longo!');
-    } else if (!EMAIL_REGEX.test(email)) {
+    } else if (!isValidEmail(email)) {
       errors.push('Formato de e-mail inválido!');
     }
   }
 
-  // Telefone
   if (!d.phone || typeof d.phone !== 'string' || d.phone.trim().length === 0) {
     errors.push('O telefone é obrigatório!');
   } else if (
@@ -45,7 +51,6 @@ function validateRegister(data) {
     );
   }
 
-  // Senha
   if (!d.password || d.password.trim().length === 0) {
     errors.push('A senha é obrigatória!');
   } else if (typeof d.password !== 'string') {
@@ -56,7 +61,6 @@ function validateRegister(data) {
     );
   }
 
-  // Confirmação de senha
   if (!d.confirmpassword) {
     errors.push('A confirmação de senha é obrigatória!');
   }
@@ -86,7 +90,7 @@ function validateLogin(data) {
 
     if (email.length > EMAIL_MAX) {
       errors.push('O e-mail é muito longo!');
-    } else if (!EMAIL_REGEX.test(email)) {
+    } else if (!isValidEmail(email)) {
       errors.push('Formato de e-mail inválido!');
     }
   }
@@ -104,7 +108,7 @@ function validateLogin(data) {
 module.exports = {
   validateRegister,
   validateLogin,
-  EMAIL_REGEX,
+  isValidEmail,
   NAME_MIN,
   NAME_MAX,
   PASSWORD_MIN,
