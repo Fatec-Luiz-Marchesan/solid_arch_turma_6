@@ -117,4 +117,22 @@ describe('User Model — validações do schema', () => {
       expect(u.updatedAt).toBeUndefined();
     });
   });
+  describe('campo bio', () => {
+    it('é opcional e tem default vazio', () => {
+      const u = new User(validData);
+      const err = u.validateSync();
+      expect(err).toBeUndefined();
+      expect(u.bio).toBe('');
+    });
+
+    it('aceita bio quando fornecido', () => {
+      const u = new User({ ...validData, bio: 'Dev fullstack' });
+      expect(u.bio).toBe('Dev fullstack');
+    });
+
+    it('aplica trim no bio', () => {
+      const u = new User({ ...validData, bio: '  Olá mundo  ' });
+      expect(u.bio).toBe('Olá mundo');
+    });
+  });
 });
