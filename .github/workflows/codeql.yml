@@ -19,6 +19,17 @@ on:
   schedule:
     - cron: '28 5 * * 3'
 
+  name: Initialize CodeQL
+  uses: github/codeql-action/init@v3
+  with:
+    languages: javascript-typescript
+    # Adicione isto para ele ignorar completamente relatórios de teste e builds
+    paths-ignore: |
+      **/coverage/**
+      **/lcov-report/**
+      **/dist/**
+      **/node_modules/**
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})

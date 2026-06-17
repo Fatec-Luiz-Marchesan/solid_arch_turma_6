@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch --runInBand",
     "start": "nodemon ./index.js localhost 5000",
     "test:socket": "node ./infra/realtime/socket-smoke-test.js",
     "test:docker": "bash ../scripts/docker-smoke-test.sh"
@@ -24,6 +25,9 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "mongodb-memory-server": "^10.1.4",
     "socket.io-client": "^4.8.1"
   }
 }

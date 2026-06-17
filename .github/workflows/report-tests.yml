@@ -1,0 +1,38 @@
+name: Report Tests CI
+
+# Roda os testes automatizados da Task 89 (feat/complete-report-flow)
+# em todo push para branches feat/** e main, e em PRs para main.
+# Pra você não ter que ficar digitando tudo um por um para fazer os testes!
+# Isso se chama teste automatizado Duuuhh! Pra você não fazer linha por linha!
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Unit & Integration Tests (Report)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Run tests with coverage
+        working-directory: backend
+        run: npm test
